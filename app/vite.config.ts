@@ -9,9 +9,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       strategies: 'generateSW',
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        skipWaiting: true,
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 500 * 1024,
         runtimeCaching: [
           {
