@@ -12,7 +12,7 @@ export default defineConfig({
       registerType: 'prompt',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        maximumFileSizeToCacheInBytes: 250 * 1024,
+        maximumFileSizeToCacheInBytes: 500 * 1024,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./,
