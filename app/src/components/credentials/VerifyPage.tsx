@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import type { CredentialVerification } from '../../../contracts/api/credentials';
+import { api } from '../../lib/api/client';
 
 async function fetchVerification(
   credentialId: string,
 ): Promise<CredentialVerification> {
-  const res = await fetch(`/api/v1/verify/${credentialId}`);
-  if (!res.ok) throw new Error('Verification failed');
-  return (await res.json()) as CredentialVerification;
+  return api.get<CredentialVerification>(`/verify/${credentialId}`);
 }
 
 export function VerifyPage() {

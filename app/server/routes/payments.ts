@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'node:crypto';
 import { z } from 'zod';
 import { query } from '../db/index.js';
-import { TABLES } from '../../contracts/shared/constants.js';
+import { TABLES } from '../db/schema.js';
 import { queues } from '../queue/index.js';
 import { QUEUE_NAMES } from '../../contracts/shared/events.js';
 import {
@@ -29,7 +29,7 @@ const initializePaymentSchema = z.object({
 
 const paystackWebhookSchema = z.object({
   event: z.string(),
-  data: z.record(z.unknown()),
+  data: z.record(z.string(), z.unknown()),
 });
 
 const invoiceCreateSchema = z.object({
@@ -165,11 +165,6 @@ export default async function paymentRoutes(app: FastifyInstance): Promise<void>
 
   app.post(
     '/api/v1/webhooks/paystack',
-    {
-      config: {
-        rawBody: true,
-      },
-    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const signature = request.headers['x-paystack-signature'] as string;
       const rawBody =

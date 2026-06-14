@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { api } from '../../lib/api/client';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
 
@@ -48,12 +49,9 @@ export function CSVUpload({ onClose, orgId }: CSVUploadProps) {
     (jobId: string) => {
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const res = await fetch(
-            `${API_BASE}/admin/learners/bulk-upload/${jobId}`,
-            { credentials: 'include' },
+          const data = await api.get<BulkEnrollmentStatus>(
+            `/admin/learners/bulk-upload/${jobId}`,
           );
-          if (!res.ok) return;
-          const data = (await res.json()) as BulkEnrollmentStatus;
           setJobStatus(data);
 
           if (data.status === 'completed') {

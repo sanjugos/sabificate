@@ -265,7 +265,7 @@ async function sendArtifactPrompt(
 
 export async function processQuizReply(
   userId: string,
-  messageId: string,
+  _messageId: string,
   buttonPayload: string,
 ): Promise<void> {
   const state = await getConversationState(userId);

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+// Report export downloads blobs (CSV files), so it uses raw fetch
+// instead of the shared api client which parses JSON responses.
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api/v1';
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { api } from '../../lib/api/client';
 
 interface SubscriptionData {
   id: string;
@@ -53,12 +54,7 @@ export default function SubscriptionStatus({ onManage }: SubscriptionStatusProps
   useEffect(() => {
     async function fetchSubscription() {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch('/api/v1/subscriptions/current', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to fetch subscription');
-        const json = (await res.json()) as { data: SubscriptionData | null };
+        const json = await api.get<{ data: SubscriptionData | null }>('/subscriptions/current');
         setSubscription(json.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load subscription');

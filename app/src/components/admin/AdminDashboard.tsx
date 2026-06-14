@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { CSVUpload } from './CSVUpload';
 import { ReportExport } from './ReportExport';
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+import { api } from '../../lib/api/client';
 
 /* ------------------------------------------------------------------ */
 /*  Contract types                                                     */
@@ -104,11 +103,7 @@ export function AdminDashboardView() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch(`${API_BASE}/admin/dashboard/overview`, {
-          credentials: 'include',
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as AdminDashboardOverview;
+        const data = await api.get<AdminDashboardOverview>('/admin/dashboard/overview');
         if (!cancelled) setOverview(data);
       } catch {
         // silent
@@ -130,12 +125,9 @@ export function AdminDashboardView() {
         params.set('page', String(learnerPage));
         params.set('limit', String(PER_PAGE));
 
-        const res = await fetch(
-          `${API_BASE}/admin/dashboard/learners?${params.toString()}`,
-          { credentials: 'include' },
+        const data = await api.get<PaginatedLearners>(
+          `/admin/dashboard/learners?${params.toString()}`,
         );
-        if (!res.ok) return;
-        const data = (await res.json()) as PaginatedLearners;
         if (!cancelled) {
           setLearners(data.learners);
           setTotalLearnerRows(data.pagination.total);

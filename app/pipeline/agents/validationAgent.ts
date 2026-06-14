@@ -13,12 +13,7 @@
  * Returns a structured validation report with pass/fail status,
  * issues found, and a quality score.
  */
-import { z } from 'zod';
 import {
-  TextBlockSchema,
-  QuizBlockSchema,
-  ArtifactPromptBlockSchema,
-  ScenarioBlockSchema,
   ContentBlockSchema,
 } from '../schemas/contentSchema.ts';
 import type {

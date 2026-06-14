@@ -47,11 +47,6 @@ export default async function whatsappRoutes(app: FastifyInstance): Promise<void
   // ── POST /api/v1/webhooks/whatsapp — Meta webhook handler ──────────────
   app.post(
     '/api/v1/webhooks/whatsapp',
-    {
-      config: {
-        rawBody: true,
-      },
-    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       // Validate signature
       const signature = request.headers['x-hub-signature-256'] as string | undefined;
@@ -74,7 +69,7 @@ export default async function whatsappRoutes(app: FastifyInstance): Promise<void
       reply.status(200).send('EVENT_RECEIVED');
 
       try {
-        const messages = await handleIncomingMessage(body as Parameters<typeof handleIncomingMessage>[0]);
+        const messages = await handleIncomingMessage(body as unknown as Parameters<typeof handleIncomingMessage>[0]);
 
         for (const msg of messages) {
           // Handle button replies (quiz answers)

@@ -1,4 +1,5 @@
-type SyncState = 'synced' | 'syncing' | 'pending' | 'error';
+import { useSyncStatus } from '../../lib/sync/SyncContext';
+import type { SyncStatus as SyncState } from '../../lib/sync/useSyncEngine';
 
 const SYNC_LABELS: Record<SyncState, string> = {
   synced: 'Synced',
@@ -15,8 +16,7 @@ const SYNC_COLORS: Record<SyncState, string> = {
 };
 
 export function SyncStatus() {
-  // Hardcoded to 'synced' for now; will be wired to real sync engine later
-  const state: SyncState = 'synced';
+  const { status: state } = useSyncStatus();
 
   return (
     <span

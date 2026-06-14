@@ -1,5 +1,5 @@
 import { query } from '../db/index.js';
-import { TABLES } from '../../contracts/shared/constants.js';
+import { TABLES } from '../db/schema.js';
 import { PAYMENT } from '../../contracts/shared/constants.js';
 import type { Invoice } from '../../contracts/api/payments.js';
 

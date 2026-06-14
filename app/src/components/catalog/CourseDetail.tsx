@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+import { api } from '../../lib/api/client';
 
 /* ------------------------------------------------------------------ */
 /*  Contract types                                                     */
@@ -83,15 +82,7 @@ export function CourseDetailView() {
       setLoading(true);
       setNotFound(false);
       try {
-        const res = await fetch(`${API_BASE}/courses/${slug}`, {
-          credentials: 'include',
-        });
-        if (res.status === 404) {
-          if (!cancelled) setNotFound(true);
-          return;
-        }
-        if (!res.ok) throw new Error('Failed to fetch course');
-        const data = (await res.json()) as CourseDetail;
+        const data = await api.get<CourseDetail>(`/courses/${slug}`);
         if (!cancelled) {
           setCourse(data);
           // Expand first module by default
@@ -119,12 +110,9 @@ export function CourseDetailView() {
 
     async function loadProgress() {
       try {
-        const res = await fetch(
-          `${API_BASE}/learner/courses/${course!.id}/progress`,
-          { credentials: 'include' },
+        const data = await api.get<CourseProgressSummary>(
+          `/learner/courses/${course!.id}/progress`,
         );
-        if (!res.ok) return;
-        const data = (await res.json()) as CourseProgressSummary;
         if (!cancelled) setProgress(data);
       } catch {
         // silent
@@ -141,13 +129,8 @@ export function CourseDetailView() {
     if (!course) return;
     setEnrolling(true);
     try {
-      const res = await fetch(`${API_BASE}/courses/${course.slug}/enroll`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        setCourse({ ...course, enrollment_status: 'enrolled' });
-      }
+      await api.post(`/courses/${course.slug}/enroll`);
+      setCourse({ ...course, enrollment_status: 'enrolled' });
     } catch {
       // silent
     } finally {

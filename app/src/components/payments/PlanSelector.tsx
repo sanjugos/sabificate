@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { SubscriptionPlan } from '../../../contracts/api/payments';
+import { api } from '../../lib/api/client';
 
 type BillingCycle = 'monthly' | 'quarterly' | 'annual';
 
@@ -36,9 +37,7 @@ export default function PlanSelector({ onSelectPlan }: PlanSelectorProps) {
   useEffect(() => {
     async function fetchPlans() {
       try {
-        const res = await fetch('/api/v1/plans');
-        if (!res.ok) throw new Error('Failed to fetch plans');
-        const json = (await res.json()) as { data: SubscriptionPlan[] };
+        const json = await api.get<{ data: SubscriptionPlan[] }>('/plans');
         setPlans(json.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load plans');

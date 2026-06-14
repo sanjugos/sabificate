@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CourseCard } from './CourseCard';
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+import { api } from '../../lib/api/client';
 
 /* ------------------------------------------------------------------ */
 /*  Contract types (inline — not importable from contracts in client)  */
@@ -106,11 +105,7 @@ export function CourseCatalog() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch(`${API_BASE}/categories`, {
-          credentials: 'include',
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as CategoryListResponse;
+        const data = await api.get<CategoryListResponse>('/categories');
         if (!cancelled) setCategories(data.categories);
       } catch {
         // silent
@@ -133,11 +128,7 @@ export function CourseCatalog() {
       if (selectedCategory) params.set('category', selectedCategory);
       if (selectedDifficulty) params.set('difficulty', selectedDifficulty);
 
-      const res = await fetch(`${API_BASE}/courses?${params.toString()}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to fetch courses');
-      const body = (await res.json()) as CourseListResponse;
+      const body = await api.get<CourseListResponse>(`/courses?${params.toString()}`);
       setCourses(body.courses);
       setTotal(body.pagination.total);
     } catch {

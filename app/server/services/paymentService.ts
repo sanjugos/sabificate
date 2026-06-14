@@ -1,5 +1,5 @@
 import { query } from '../db/index.js';
-import { TABLES } from '../../contracts/shared/constants.js';
+import { TABLES } from '../db/schema.js';
 import { queues } from '../queue/index.js';
 import { QUEUE_NAMES } from '../../contracts/shared/events.js';
 import type {

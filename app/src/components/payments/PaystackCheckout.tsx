@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { SubscriptionPlan, InitializePaymentResponse } from '../../../contracts/api/payments';
+import { api } from '../../lib/api/client';
 
 interface PaystackCheckoutProps {
   plan: SubscriptionPlan;
@@ -24,27 +25,13 @@ export default function PaystackCheckout({
     setError(null);
 
     try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch('/api/v1/payments/initialize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const json = await api.post<{ data: InitializePaymentResponse }>(
+        '/payments/initialize',
+        {
           plan_id: plan.id,
           payment_type: paymentType,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(
-          (err as { message?: string }).message ?? 'Failed to initialize payment',
-        );
-      }
-
-      const json = (await res.json()) as { data: InitializePaymentResponse };
+        },
+      );
       const { authorization_url, reference } = json.data;
 
       setState('redirecting');
@@ -152,14 +139,10 @@ async function verifyAndNotify(
   onSuccess: (reference: string) => void,
 ): Promise<void> {
   try {
-    const token = localStorage.getItem('access_token');
-    const res = await fetch(`/api/v1/payments/verify/${encodeURIComponent(reference)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const json = await api.get<{ data: { status: string } }>(
+      `/payments/verify/${encodeURIComponent(reference)}`,
+    );
 
-    if (!res.ok) return;
-
-    const json = (await res.json()) as { data: { status: string } };
     if (json.data.status === 'success') {
       // Clean up URL params
       const url = new URL(window.location.href);

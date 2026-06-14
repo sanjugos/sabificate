@@ -5,9 +5,13 @@ import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
 import { verifyAccessToken } from '../auth/jwt.js';
 import type { JwtPayload } from '../auth/jwt.js';
+import authRoutes from '../auth/routes.js';
 import coursesRoutes from '../routes/courses.js';
 import progressRoutes from '../routes/progress.js';
 import adminRoutes from '../routes/admin.js';
+import paymentRoutes from '../routes/payments.js';
+import credentialRoutes from '../routes/credentials.js';
+import whatsappRoutes from '../routes/whatsapp.js';
 
 // ── Module augmentation ────────────────────────────────────────────────────
 
@@ -32,6 +36,9 @@ declare module 'fastify' {
       request: import('fastify').FastifyRequest,
       reply: import('fastify').FastifyReply,
     ) => Promise<void>;
+  }
+  interface FastifyContextConfig {
+    rawBody?: boolean;
   }
 }
 
@@ -119,9 +126,13 @@ export async function buildServer() {
 
   // ── Route plugins ──────────────────────────────────────────────────────
 
+  await server.register(authRoutes);
   await server.register(coursesRoutes);
   await server.register(progressRoutes);
   await server.register(adminRoutes);
+  await server.register(paymentRoutes);
+  await server.register(credentialRoutes);
+  await server.register(whatsappRoutes);
 
   return server;
 }

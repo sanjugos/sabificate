@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Credential } from '../../../contracts/api/credentials';
+import { api } from '../../lib/api/client';
 
 interface CredentialListProps {
   onSelect: (credential: Credential) => void;
@@ -12,11 +13,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
 };
 
 async function fetchCredentials(): Promise<Credential[]> {
-  const res = await fetch('/api/v1/credentials', {
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error('Failed to load credentials');
-  const body = (await res.json()) as { credentials: Credential[] };
+  const body = await api.get<{ credentials: Credential[] }>('/credentials');
   return body.credentials;
 }
 

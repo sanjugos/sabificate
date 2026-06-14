@@ -16,7 +16,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { CourseBriefSchema, type CourseBrief } from '../schemas/briefSchema.ts';
 import { ContentBlockSchema } from '../schemas/contentSchema.ts';
-import type { ContentBlockZ, TextBlockZ, QuizBlockZ } from '../schemas/contentSchema.ts';
+import type { ContentBlockZ } from '../schemas/contentSchema.ts';
 import { generateLesson } from '../agents/lessonGenerator.ts';
 import { generateQuiz } from '../agents/quizGenerator.ts';
 import { generateAdaptiveVariants } from '../agents/adaptiveVariantGenerator.ts';

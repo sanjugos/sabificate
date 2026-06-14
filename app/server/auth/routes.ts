@@ -491,4 +491,31 @@ export default async function authRoutes(fastify: FastifyInstance): Promise<void
       return reply.code(200).send({ message: 'Password updated successfully' });
     },
   );
+
+  // ── GET /api/v1/auth/me ─────────────────────────────────────────────────────
+
+  fastify.get(
+    '/api/v1/auth/me',
+    { preHandler: [fastify.authenticate] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const result = await query(
+        `SELECT id, email, first_name, last_name, role, org_id, data_saver_mode, avatar_url
+         FROM users WHERE id = $1`,
+        [request.user.user_id],
+      );
+
+      if (result.rows.length === 0) {
+        return reply.code(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: 'User not found',
+        });
+      }
+
+      return reply.code(200).send({
+        status: 'success',
+        data: result.rows[0],
+      });
+    },
+  );
 }

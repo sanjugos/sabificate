@@ -3,7 +3,9 @@ import type {
   RegisterRequest,
   AuthResponse,
   RefreshResponse,
+  UserProfile,
 } from '../../../contracts/api/auth';
+import { api as apiClient } from '../api/client';
 
 const BASE = '/api/v1/auth';
 
@@ -105,4 +107,8 @@ export async function confirmPasswordReset(
     }
     throw new Error(message);
   }
+}
+
+export async function fetchMe(): Promise<UserProfile> {
+  return apiClient.get<UserProfile>('/auth/me');
 }

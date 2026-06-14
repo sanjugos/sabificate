@@ -8,7 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 import type { UserProfile, LoginRequest, RegisterRequest } from '../../../contracts/api/auth';
-import { loginApi, registerApi, refreshApi, logoutApi } from './api';
+import { loginApi, registerApi, refreshApi, logoutApi, fetchMe } from './api';
+import { setAccessToken } from '../api/client';
 
 interface AuthContextValue {
   user: UserProfile | null;
@@ -45,10 +46,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const res = await refreshApi();
           accessTokenRef.current = res.access_token;
+          setAccessToken(res.access_token);
           scheduleRefresh(res.expires_in);
         } catch {
           // Refresh failed — session expired
           accessTokenRef.current = null;
+          setAccessToken(null);
           setUser(null);
         }
       }, delayMs);
@@ -65,15 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await refreshApi();
         if (cancelled) return;
         accessTokenRef.current = res.access_token;
-        // The refresh endpoint doesn't return user — we need an initial login
-        // for user data. However, the spec says refreshApi returns RefreshResponse
-        // (no user). We'll call loginApi-style endpoint OR accept that user
-        // is set only on login/register. For session restore, we need a
-        // /me endpoint. Since only refresh is available, we keep the token
-        // but set user to null until a /me call is available.
-        // For now: store the token and schedule refresh. User will be null
-        // until we have a /me endpoint, unless we enhance this later.
+        setAccessToken(res.access_token);
         scheduleRefresh(res.expires_in);
+
+        // Fetch user profile now that we have a valid token
+        try {
+          const user = await fetchMe();
+          if (!cancelled) setUser(user);
+        } catch {
+          // Token works but /me failed — keep the token, user stays null
+        }
       } catch {
         // No valid session — that's fine
       } finally {
@@ -96,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (data: LoginRequest) => {
       const res = await loginApi(data);
       accessTokenRef.current = res.access_token;
+      setAccessToken(res.access_token);
       setUser(res.user);
       scheduleRefresh(res.expires_in);
     },
@@ -106,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (data: RegisterRequest) => {
       const res = await registerApi(data);
       accessTokenRef.current = res.access_token;
+      setAccessToken(res.access_token);
       setUser(res.user);
       scheduleRefresh(res.expires_in);
     },
@@ -117,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await logoutApi();
     } finally {
       accessTokenRef.current = null;
+      setAccessToken(null);
       setUser(null);
       clearRefreshTimer();
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Invoice } from '../../../contracts/api/payments';
 import type { Pagination } from '../../../contracts/types/index';
+import { api } from '../../lib/api/client';
 
 interface InvoiceListResponse {
   data: Invoice[];
@@ -45,12 +46,7 @@ export default function InvoiceList() {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`/api/v1/admin/invoices?page=${p}&limit=10`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Failed to fetch invoices');
-      const json = (await res.json()) as InvoiceListResponse;
+      const json = await api.get<InvoiceListResponse>(`/admin/invoices?page=${p}&limit=10`);
       setInvoices(json.data);
       setPagination(json.pagination);
     } catch (err) {

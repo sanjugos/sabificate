@@ -19,15 +19,6 @@ interface ScheduleJobData {
   user_id: string;
 }
 
-interface WhatsAppSubscription {
-  id: string;
-  user_id: string;
-  preferred_time: string; // HH:MM format in user's timezone
-  timezone: string;
-  active: boolean;
-  created_at: string;
-}
-
 // ── Schedule Management ─────────────────────────────────────────────────────
 
 export async function scheduleDaily(
