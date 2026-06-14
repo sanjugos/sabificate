@@ -12,7 +12,7 @@ export default defineConfig({
       registerType: 'prompt',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        maximumFileSizeToCacheInBytes: 200 * 1024,
+        maximumFileSizeToCacheInBytes: 250 * 1024,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./,
@@ -54,9 +54,19 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          dexie: ['dexie', 'dexie-react-hooks'],
+        manualChunks(id: string) {
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/react-router')
+          ) {
+            return 'vendor';
+          }
+          if (
+            id.includes('node_modules/dexie')
+          ) {
+            return 'dexie';
+          }
         },
       },
     },
