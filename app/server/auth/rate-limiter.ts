@@ -1,7 +1,29 @@
-import Redis from 'ioredis';
 import { AUTH } from '../../contracts/shared/constants.js';
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const useInMemory = process.env.DEV_INMEMORY === 'true';
+
+// ── Redis client (real or mock) ────────────────────────────────────────────
+
+interface RedisLike {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, ...args: (string | number)[]): Promise<'OK'>;
+  del(...keys: string[]): Promise<number>;
+  incr(key: string): Promise<number>;
+  expire(key: string, seconds: number): Promise<number>;
+  ttl(key: string): Promise<number>;
+}
+
+let redis: RedisLike;
+
+if (useInMemory) {
+  // Lazy-load mock to avoid top-level await
+  const { createMockRedis } = await import('../dev/redis-mock.js');
+  redis = createMockRedis();
+  console.log('[dev/rate-limiter] Using in-memory Redis mock');
+} else {
+  const { default: Redis } = await import('ioredis');
+  redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379') as unknown as RedisLike;
+}
 
 const KEYS = {
   attempts: (ip: string) => `login:attempts:${ip}`,

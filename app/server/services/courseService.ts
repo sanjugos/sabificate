@@ -15,24 +15,24 @@ export async function listCourses(params: CourseListRequest): Promise<CourseList
   const limit = Math.min(params.limit ?? 20, 100);
   const offset = (page - 1) * limit;
 
-  const conditions: string[] = ['c.is_published = true'];
+  const conditions: string[] = ['courses.is_published = true'];
   const values: unknown[] = [];
   let paramIndex = 1;
 
   if (params.query) {
-    conditions.push(`(c.title ILIKE $${paramIndex} OR c.description ILIKE $${paramIndex})`);
+    conditions.push(`(courses.title ILIKE $${paramIndex} OR courses.description ILIKE $${paramIndex})`);
     values.push(`%${params.query}%`);
     paramIndex++;
   }
 
   if (params.category) {
-    conditions.push(`cc.slug = $${paramIndex}`);
+    conditions.push(`course_categories.slug = $${paramIndex}`);
     values.push(params.category);
     paramIndex++;
   }
 
   if (params.difficulty) {
-    conditions.push(`c.difficulty_level = $${paramIndex}`);
+    conditions.push(`courses.difficulty_level = $${paramIndex}`);
     values.push(params.difficulty);
     paramIndex++;
   }
@@ -42,37 +42,43 @@ export async function listCourses(params: CourseListRequest): Promise<CourseList
   // Count query
   const countResult = await query(
     `SELECT COUNT(*)::int AS total
-     FROM courses c
-     LEFT JOIN course_categories cc ON cc.id = c.category_id
+     FROM courses
+     LEFT JOIN course_categories ON course_categories.id = courses.category_id
      ${whereClause}`,
     values,
   );
   const total: number = countResult.rows[0].total;
 
-  // Data query
+  // Data query — avoid correlated subqueries for pg-mem compatibility
   const dataResult = await query(
     `SELECT
-       c.id,
-       c.title,
-       c.slug,
-       c.description,
-       c.thumbnail_url,
-       c.difficulty_level,
-       c.estimated_duration_minutes,
-       c.cpd_hours,
-       c.professional_body,
-       cc.id   AS cat_id,
-       cc.name AS cat_name,
-       cc.slug AS cat_slug,
-       (SELECT COUNT(*)::int FROM modules m WHERE m.course_id = c.id) AS module_count,
-       (SELECT COUNT(*)::int FROM lessons l WHERE l.course_id = c.id AND l.is_published = true) AS lesson_count
-     FROM courses c
-     LEFT JOIN course_categories cc ON cc.id = c.category_id
-     ${whereClause}
-     ORDER BY c.created_at DESC
+       courses.id,
+       courses.title,
+       courses.slug,
+       courses.description,
+       courses.thumbnail_url,
+       courses.difficulty_level,
+       courses.estimated_duration_minutes,
+       courses.cpd_hours,
+       courses.professional_body,
+       course_categories.id   AS cat_id,
+       course_categories.name AS cat_name,
+       course_categories.slug AS cat_slug
+     FROM courses
+     LEFT JOIN course_categories ON course_categories.id = courses.category_id
+     ${whereClause.replace(/\bc\./g, 'courses.').replace(/\bcc\./g, 'course_categories.')}
+     ORDER BY courses.created_at DESC
      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
     [...values, limit, offset],
   );
+
+  // Fetch counts separately per course
+  for (const r of dataResult.rows) {
+    const mc = await query('SELECT COUNT(*)::int AS cnt FROM modules WHERE course_id = $1', [r.id]);
+    r.module_count = mc.rows[0].cnt;
+    const lc = await query('SELECT COUNT(*)::int AS cnt FROM lessons WHERE course_id = $1 AND is_published = true', [r.id]);
+    r.lesson_count = lc.rows[0].cnt;
+  }
 
   const courses: CourseSummary[] = dataResult.rows.map((r) => ({
     id: r.id,
@@ -108,21 +114,25 @@ export async function getCourseBySlug(
 ): Promise<CourseDetail | null> {
   const courseResult = await query(
     `SELECT
-       c.*,
-       cc.id   AS cat_id,
-       cc.name AS cat_name,
-       cc.slug AS cat_slug,
-       (SELECT COUNT(*)::int FROM modules m WHERE m.course_id = c.id) AS module_count,
-       (SELECT COUNT(*)::int FROM lessons l WHERE l.course_id = c.id AND l.is_published = true) AS lesson_count
-     FROM courses c
-     LEFT JOIN course_categories cc ON cc.id = c.category_id
-     WHERE c.slug = $1 AND c.is_published = true`,
+       courses.*,
+       course_categories.id   AS cat_id,
+       course_categories.name AS cat_name,
+       course_categories.slug AS cat_slug
+     FROM courses
+     LEFT JOIN course_categories ON course_categories.id = courses.category_id
+     WHERE courses.slug = $1 AND courses.is_published = true`,
     [slug],
   );
 
   if (courseResult.rows.length === 0) return null;
 
   const c = courseResult.rows[0];
+
+  // Separate count queries
+  const mc = await query('SELECT COUNT(*)::int AS cnt FROM modules WHERE course_id = $1', [c.id]);
+  c.module_count = mc.rows[0].cnt;
+  const lc = await query('SELECT COUNT(*)::int AS cnt FROM lessons WHERE course_id = $1 AND is_published = true', [c.id]);
+  c.lesson_count = lc.rows[0].cnt;
 
   // Fetch modules with lessons
   const modulesResult = await query(
@@ -201,9 +211,9 @@ export async function getLessonContent(
 ): Promise<{ content: object; enrolled: boolean } | null> {
   // Get lesson and verify it exists
   const lessonResult = await query(
-    `SELECT l.id, l.course_id, l.content_beginner, l.content_intermediate, l.content_advanced
-     FROM lessons l
-     WHERE l.id = $1 AND l.is_published = true`,
+    `SELECT id, course_id, content_beginner, content_intermediate, content_advanced
+     FROM lessons
+     WHERE id = $1 AND is_published = true`,
     [lessonId],
   );
 
@@ -232,16 +242,16 @@ export async function getLessonContent(
 
 export async function listCategories(): Promise<CategoryListResponse> {
   const result = await query(
-    `SELECT
-       cc.id,
-       cc.name,
-       cc.slug,
-       COUNT(c.id)::int AS course_count
-     FROM course_categories cc
-     LEFT JOIN courses c ON c.category_id = cc.id AND c.is_published = true
-     GROUP BY cc.id, cc.name, cc.slug
-     ORDER BY cc.sort_order, cc.name`,
+    `SELECT id, name, slug FROM course_categories ORDER BY sort_order, name`,
   );
+
+  for (const r of result.rows) {
+    const cc = await query(
+      'SELECT COUNT(*)::int AS cnt FROM courses WHERE category_id = $1 AND is_published = true',
+      [r.id],
+    );
+    r.course_count = cc.rows[0].cnt;
+  }
 
   return {
     categories: result.rows.map((r) => ({

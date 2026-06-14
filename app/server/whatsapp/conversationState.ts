@@ -1,10 +1,26 @@
-import Redis from 'ioredis';
 import { query } from '../db/index.js';
 import { TABLES } from '../db/schema.js';
 
-// ── Redis Connection ────────────────────────────────────────────────────────
+const useInMemory = process.env.DEV_INMEMORY === 'true';
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+// ── Redis client (real or mock) ────────────────────────────────────────────
+
+interface RedisLike {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, ...args: (string | number)[]): Promise<'OK'>;
+  del(...keys: string[]): Promise<number>;
+}
+
+let redis: RedisLike;
+
+if (useInMemory) {
+  const { createMockRedis } = await import('../dev/redis-mock.js');
+  redis = createMockRedis();
+  console.log('[dev/conversationState] Using in-memory Redis mock');
+} else {
+  const { default: Redis } = await import('ioredis');
+  redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379') as unknown as RedisLike;
+}
 
 const TTL_SECONDS = 24 * 60 * 60; // 24-hour TTL per conversation
 

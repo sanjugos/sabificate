@@ -5,13 +5,47 @@ import { TABLES } from '../db/schema.js';
 import { deliverLesson } from './lessonDelivery.js';
 import { hasWhatsAppConsent } from './conversationState.js';
 
+const useInMemory = process.env.DEV_INMEMORY === 'true';
+
 // ── Constants ───────────────────────────────────────────────────────────────
 
 const SCHEDULER_QUEUE_NAME = 'whatsapp.lesson.schedule';
 
 // ── Queue ───────────────────────────────────────────────────────────────────
 
-const schedulerQueue = new Queue(SCHEDULER_QUEUE_NAME, { connection });
+interface SchedulerQueueLike {
+  add(name: string, data: unknown, opts?: unknown): Promise<unknown>;
+  getRepeatableJobs(): Promise<{ id?: string | null; key: string }[]>;
+  removeRepeatableByKey(key: string): Promise<unknown>;
+  close(): Promise<void>;
+}
+
+let schedulerQueue: SchedulerQueueLike;
+
+if (useInMemory) {
+  const jobs: { id?: string; key: string; name: string; data: unknown }[] = [];
+  schedulerQueue = {
+    async add(name: string, data: unknown, opts?: unknown) {
+      const jobId = (opts as { jobId?: string } | undefined)?.jobId;
+      const entry = { id: jobId, key: `${name}:${jobId ?? Date.now()}`, name, data };
+      jobs.push(entry);
+      console.log(`[dev/scheduler] add "${name}"`, JSON.stringify(data).slice(0, 200));
+      return entry;
+    },
+    async getRepeatableJobs() {
+      return jobs;
+    },
+    async removeRepeatableByKey(key: string) {
+      const idx = jobs.findIndex((j) => j.key === key);
+      if (idx >= 0) jobs.splice(idx, 1);
+    },
+    async close() {
+      /* noop */
+    },
+  };
+} else {
+  schedulerQueue = new Queue(SCHEDULER_QUEUE_NAME, { connection });
+}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -112,7 +146,12 @@ export async function cancelSchedule(userId: string): Promise<void> {
 
 // ── Worker ──────────────────────────────────────────────────────────────────
 
-export function startSchedulerWorker(): Worker {
+export function startSchedulerWorker(): Worker | { close(): Promise<void> } {
+  if (useInMemory) {
+    console.log('[dev/scheduler] Stub scheduler worker registered');
+    return { close: async () => {} };
+  }
+
   const worker = new Worker(
     SCHEDULER_QUEUE_NAME,
     async (job) => {
