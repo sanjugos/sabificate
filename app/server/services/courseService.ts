@@ -202,16 +202,49 @@ export async function getCourseBySlug(
   };
 }
 
+// ── Tier mapping ──────────────────────────────────────────────────────────
+
+const TIER_TO_COLUMN: Record<DifficultyTier, string> = {
+  foundational: 'content_foundational',
+  working: 'content_working',
+  applied: 'content_applied',
+};
+
+
+/**
+ * Resolve the user's default content tier from user_personas.
+ * Falls back to 'foundational' if no persona exists.
+ */
+async function resolveUserTier(userId: string): Promise<DifficultyTier> {
+  const result = await query(
+    `SELECT resolved_tier, proficiency_level FROM user_personas WHERE user_id = $1`,
+    [userId],
+  );
+
+  if (result.rows.length === 0) return 'foundational';
+
+  const row = result.rows[0];
+  const tier = row.resolved_tier ?? row.proficiency_level;
+
+  if (tier === 'foundational' || tier === 'working' || tier === 'applied') {
+    return tier as DifficultyTier;
+  }
+
+  return 'foundational';
+}
+
 // ── getLessonContent ───────────────────────────────────────────────────────
 
 export async function getLessonContent(
   lessonId: string,
-  tier: DifficultyTier,
-  userId: string,
+  tier: DifficultyTier | undefined,
+  userId: string | null,
 ): Promise<{ content: object; enrolled: boolean } | null> {
   // Get lesson and verify it exists
   const lessonResult = await query(
-    `SELECT id, course_id, content_beginner, content_intermediate, content_advanced
+    `SELECT id, course_id, module_id, title, sort_order, estimated_duration_minutes,
+            content_foundational, content_working, content_applied,
+            is_free
      FROM lessons
      WHERE id = $1 AND is_published = true`,
     [lessonId],
@@ -220,22 +253,63 @@ export async function getLessonContent(
   if (lessonResult.rows.length === 0) return null;
 
   const lesson = lessonResult.rows[0];
+  const isFree = lesson.is_free === true;
 
-  // Check enrollment
-  const enrollResult = await query(
-    `SELECT id FROM enrollment
-     WHERE user_id = $1 AND course_id = $2 AND status = 'active'`,
-    [userId, lesson.course_id],
-  );
+  // Free lessons don't require enrollment
+  let isEnrolled = false;
+  if (userId) {
+    const enrollResult = await query(
+      `SELECT id FROM enrollment
+       WHERE user_id = $1 AND course_id = $2 AND status = 'active'`,
+      [userId, lesson.course_id],
+    );
+    isEnrolled = enrollResult.rows.length > 0;
+  }
 
-  if (enrollResult.rows.length === 0) {
+  if (!isFree && !isEnrolled) {
     return { content: {}, enrolled: false };
   }
 
-  const contentColumn = `content_${tier}` as keyof typeof lesson;
-  const content = lesson[contentColumn] ?? lesson.content_beginner ?? {};
+  // Auto-detect tier from user persona if not explicitly provided
+  let resolvedTier: DifficultyTier = tier ?? 'foundational';
+  if (!tier && userId) {
+    resolvedTier = await resolveUserTier(userId);
+  }
 
-  return { content, enrolled: true };
+  const contentColumn = TIER_TO_COLUMN[resolvedTier] as keyof typeof lesson;
+  const rawContent = lesson[contentColumn]
+    ?? lesson.content_foundational
+    ?? {};
+  const blocks = (rawContent as { blocks?: unknown[] }).blocks ?? [];
+
+  // Prev/next lesson by sort order within the same module
+  const prevResult = await query(
+    `SELECT id FROM lessons
+     WHERE module_id = $1 AND is_published = true AND sort_order < $2
+     ORDER BY sort_order DESC LIMIT 1`,
+    [lesson.module_id, lesson.sort_order],
+  );
+  const nextResult = await query(
+    `SELECT id FROM lessons
+     WHERE module_id = $1 AND is_published = true AND sort_order > $2
+     ORDER BY sort_order ASC LIMIT 1`,
+    [lesson.module_id, lesson.sort_order],
+  );
+
+  const content = {
+    id: lesson.id,
+    title: lesson.title,
+    module_id: lesson.module_id,
+    course_id: lesson.course_id,
+    sort_order: lesson.sort_order,
+    estimated_duration_minutes: lesson.estimated_duration_minutes ?? 0,
+    tier: resolvedTier,
+    blocks,
+    prev_lesson_id: prevResult.rows[0]?.id ?? null,
+    next_lesson_id: nextResult.rows[0]?.id ?? null,
+  };
+
+  return { content, enrolled: isEnrolled || isFree };
 }
 
 // ── listCategories ─────────────────────────────────────────────────────────

@@ -14,7 +14,7 @@ function textBlock(
     type: 'text_block',
     id,
     content: `## ${title}\n\n${body}`,
-    difficulty_tier: 'intermediate', // overridden per tier at the lesson level
+    difficulty_tier: 'working', // overridden per tier at the lesson level
   };
 }
 
@@ -1096,25 +1096,46 @@ export async function seed(): Promise<void> {
 
   const plans = [
     {
-      name: 'Individual Monthly',
+      name: 'Free Individual',
+      type: 'individual',
+      price_ngn: 0,
+      billing_cycle: 'monthly',
+      features: JSON.stringify(['Access all course content', 'Completion badges', 'Community access']),
+    },
+    {
+      name: 'Professional Monthly',
       type: 'individual',
       price_ngn: 2500,
       billing_cycle: 'monthly',
-      features: JSON.stringify(['Unlimited courses', 'CPD tracking', 'Mobile access']),
+      features: JSON.stringify(['Everything in Free', 'Verified certificates', 'CPD tracking', 'Priority support']),
     },
     {
-      name: 'Individual Annual',
+      name: 'Professional Annual',
       type: 'individual',
       price_ngn: 24000,
       billing_cycle: 'annual',
-      features: JSON.stringify(['Unlimited courses', 'CPD tracking', 'Mobile access', 'Save 20%']),
+      features: JSON.stringify(['Everything in Professional', '2 months free']),
     },
     {
-      name: 'Corporate Per-Seat',
+      name: 'B2B Compliance Essentials',
       type: 'corporate',
-      price_ngn: 1800,
+      price_ngn: 3500,
       billing_cycle: 'monthly',
-      features: JSON.stringify(['Per-seat pricing', 'Admin dashboard', 'Progress reports', 'Bulk enrollment']),
+      features: JSON.stringify(['Per-seat pricing', 'Admin dashboard', 'Compliance tracking', 'Progress reports']),
+    },
+    {
+      name: 'B2B Professional',
+      type: 'corporate',
+      price_ngn: 5500,
+      billing_cycle: 'monthly',
+      features: JSON.stringify(['Everything in Essentials', 'Priority support', 'Custom reports', 'Bulk enrollment']),
+    },
+    {
+      name: 'B2B Enterprise',
+      type: 'corporate',
+      price_ngn: 8000,
+      billing_cycle: 'monthly',
+      features: JSON.stringify(['Everything in Professional', 'Dedicated account manager', 'API access', 'SSO integration']),
     },
   ];
 
@@ -1143,7 +1164,7 @@ export async function seed(): Promise<void> {
       'aml-compliance',
       'Comprehensive AML compliance training for Nigerian banking professionals. Covers the ML(P&P) Act 2022, CBN AML/CFT Regulations, KYC procedures, transaction monitoring, and suspicious transaction reporting. Aligned with CIBN CPD requirements.',
       categoryIds['banking-finance'],
-      'intermediate',
+      'working',
       120,
       4.0,
       'CIBN',
@@ -1255,8 +1276,8 @@ export async function seed(): Promise<void> {
 
   for (const lesson of lessonData) {
     const lessonResult = await query(
-      `INSERT INTO lessons (module_id, course_id, title, sort_order, estimated_duration_minutes, content_beginner, content_intermediate, content_advanced, has_quiz, is_published)
-       SELECT $1, $2, $3, $4::integer, $5::integer, $6::jsonb, $7::jsonb, $8::jsonb, true, true
+      `INSERT INTO lessons (module_id, course_id, title, sort_order, estimated_duration_minutes, content_foundational, content_working, content_applied, has_quiz, is_free, is_published)
+       SELECT $1, $2, $3, $4::integer, $5::integer, $6::jsonb, $7::jsonb, $8::jsonb, true, $9, true
        WHERE NOT EXISTS (
          SELECT 1 FROM lessons WHERE course_id = $2 AND module_id = $1 AND title = $3
        )`,
@@ -1269,6 +1290,7 @@ export async function seed(): Promise<void> {
         JSON.stringify(lesson.beginner),
         JSON.stringify(lesson.intermediate),
         JSON.stringify(lesson.advanced),
+        lesson.sort_order === 1,
       ],
     );
     if (lessonResult.rowCount && lessonResult.rowCount > 0) {
@@ -1276,6 +1298,45 @@ export async function seed(): Promise<void> {
     }
   }
   console.log(`  lessons    ${lessonData.length} checked`);
+
+  // ── 6b. Credential Templates for AML course ──────────────────────────
+
+  const amlCourseTitle = 'Anti-Money Laundering Compliance';
+  const credentialTemplates = [
+    {
+      name: `${amlCourseTitle} - Completion Badge`,
+      description: `Completion badge for ${amlCourseTitle}`,
+      credential_tier: 'completion_badge',
+      minimum_score: 0,
+      price_ngn: 0,
+      cpd_eligible: false,
+    },
+    {
+      name: `${amlCourseTitle} - Verified Certificate`,
+      description: `Verified certificate for ${amlCourseTitle} with assessment validation`,
+      credential_tier: 'verified_certificate',
+      minimum_score: 70,
+      price_ngn: 3000,
+      cpd_eligible: true,
+    },
+  ];
+
+  let credentialTemplateCount = 0;
+  for (const ct of credentialTemplates) {
+    const ctResult = await query(
+      `INSERT INTO credential_templates
+         (course_id, name, description, credential_tier, minimum_score, price_ngn, cpd_eligible)
+       SELECT $1, $2, $3, $4, $5::smallint, $6::integer, $7::boolean
+       WHERE NOT EXISTS (
+         SELECT 1 FROM credential_templates WHERE course_id = $1 AND credential_tier = $4
+       )`,
+      [courseId, ct.name, ct.description, ct.credential_tier, ct.minimum_score, ct.price_ngn, ct.cpd_eligible],
+    );
+    if (ctResult.rowCount && ctResult.rowCount > 0) {
+      credentialTemplateCount++;
+    }
+  }
+  console.log(`  cred tmpl  ${credentialTemplateCount} inserted`);
 
   // ── 7. Demo User (Learner) ────────────────────────────────────────────
 
@@ -1327,6 +1388,52 @@ export async function seed(): Promise<void> {
   }
   console.log(`  admin user ${adminUserId}`);
 
+  // ── 8b. Departments ───────────────────────────────────────────────────
+
+  const departmentNames = ['Compliance', 'Operations'];
+  const departmentIds: string[] = [];
+
+  for (const deptName of departmentNames) {
+    const deptResult = await query(
+      `INSERT INTO departments (org_id, name)
+       SELECT $1, $2
+       WHERE NOT EXISTS (
+         SELECT 1 FROM departments WHERE org_id = $1 AND name = $2
+       )
+       RETURNING id`,
+      [orgId, deptName],
+    );
+    if (deptResult.rows.length > 0) {
+      departmentIds.push(deptResult.rows[0].id);
+    } else {
+      const existing = await query(
+        `SELECT id FROM departments WHERE org_id = $1 AND name = $2`,
+        [orgId, deptName],
+      );
+      departmentIds.push(existing.rows[0].id);
+    }
+  }
+  console.log(`  departments ${departmentIds.join(', ')}`);
+
+  // ── 8c. Course Compliance Requirement ─────────────────────────────────
+
+  const complianceDeadline = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+  const deadlineStr = complianceDeadline.toISOString().slice(0, 10);
+
+  const compReqResult = await query(
+    `INSERT INTO course_compliance_requirements (org_id, course_id, regulatory_body, compliance_deadline, is_mandatory)
+     SELECT $1, $2, $3, $4::date, true
+     WHERE NOT EXISTS (
+       SELECT 1 FROM course_compliance_requirements WHERE org_id = $1 AND course_id = $2 AND regulatory_body = $3
+     )`,
+    [orgId, courseId, 'CBN', deadlineStr],
+  );
+  if (compReqResult.rowCount && compReqResult.rowCount > 0) {
+    console.log(`  compliance AML course -> CBN deadline ${deadlineStr}`);
+  } else {
+    console.log(`  compliance AML course -> CBN (already exists)`);
+  }
+
   // ── 9. Enrollment ─────────────────────────────────────────────────────
 
   const enrollResult = await query(
@@ -1365,6 +1472,102 @@ export async function seed(): Promise<void> {
   }
   console.log(`  consent    ${consentTypes.length} records checked`);
 
+  // ── 11. Personas & Calibration Questions ──────────────────────────────
+
+  const personaData = [
+    {
+      slug: 'new-graduate',
+      label: 'Recent Graduate',
+      description: 'Just finished school, starting my first job, learning to manage my salary',
+      default_proficiency: 'foundational',
+      default_customer_tier: 'freemium',
+      sort_order: 0,
+      calibration: {
+        question_text: 'How familiar are you with financial statements?',
+        options: JSON.stringify(["I've never seen one", "I've seen them but don't understand all parts", "I can read and interpret basic statements"]),
+        proficiency_map: JSON.stringify({ "0": "foundational", "1": "foundational", "2": "working" }),
+      },
+    },
+    {
+      slug: 'mid-career-professional',
+      label: 'Working Professional',
+      description: 'A few years into my career, looking to grow my skills and earn certifications',
+      default_proficiency: 'working',
+      default_customer_tier: 'freemium',
+      sort_order: 1,
+      calibration: {
+        question_text: 'How do you handle compliance reporting at work?',
+        options: JSON.stringify(["Someone else handles it", "I follow a checklist someone gave me", "I create and review compliance reports"]),
+        proficiency_map: JSON.stringify({ "0": "foundational", "1": "working", "2": "applied" }),
+      },
+    },
+    {
+      slug: 'team-lead-manager',
+      label: 'Team Lead / Manager',
+      description: 'Managing people and projects, need to upskill my team on compliance and best practices',
+      default_proficiency: 'working',
+      default_customer_tier: 'upskilling',
+      sort_order: 2,
+      calibration: {
+        question_text: 'How do you assess your team\'s skill gaps?',
+        options: JSON.stringify(["I'm not sure how to", "I use performance reviews", "I design training programs based on competency frameworks"]),
+        proficiency_map: JSON.stringify({ "0": "working", "1": "working", "2": "applied" }),
+      },
+    },
+    {
+      slug: 'senior-specialist',
+      label: 'Senior Specialist',
+      description: 'Deep expertise in my field, pursuing advanced certifications and CPD credits',
+      default_proficiency: 'applied',
+      default_customer_tier: 'premium',
+      sort_order: 3,
+      calibration: {
+        question_text: 'Which best describes your certification status?',
+        options: JSON.stringify(["I have no professional certifications yet", "I have 1-2 active certifications", "I maintain multiple certifications and track CPD hours"]),
+        proficiency_map: JSON.stringify({ "0": "working", "1": "applied", "2": "applied" }),
+      },
+    },
+  ];
+
+  let personaCount = 0;
+  let calibrationCount = 0;
+
+  for (const p of personaData) {
+    const personaResult = await query(
+      `INSERT INTO personas (vertical, slug, label, description, default_proficiency, default_customer_tier, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (slug) DO NOTHING
+       RETURNING id`,
+      ['financial-literacy', p.slug, p.label, p.description, p.default_proficiency, p.default_customer_tier, p.sort_order],
+    );
+
+    let personaId: string;
+    if (personaResult.rows.length > 0) {
+      personaId = personaResult.rows[0].id;
+      personaCount++;
+    } else {
+      const existing = await query(
+        `SELECT id FROM personas WHERE slug = $1`,
+        [p.slug],
+      );
+      personaId = existing.rows[0].id;
+    }
+
+    // Insert calibration question for this persona
+    const calResult = await query(
+      `INSERT INTO calibration_questions (persona_id, question_text, options, proficiency_map, sort_order)
+       SELECT $1, $2, $3::jsonb, $4::jsonb, 0
+       WHERE NOT EXISTS (
+         SELECT 1 FROM calibration_questions WHERE persona_id = $1 AND question_text = $2
+       )`,
+      [personaId, p.calibration.question_text, p.calibration.options, p.calibration.proficiency_map],
+    );
+    if (calResult.rowCount && calResult.rowCount > 0) {
+      calibrationCount++;
+    }
+  }
+  console.log(`  personas   ${personaCount} inserted, ${calibrationCount} calibration questions`);
+
   // ── Summary ────────────────────────────────────────────────────────────
 
   console.log('\n── Seed Summary ──────────────────────────────────────');
@@ -1377,6 +1580,8 @@ export async function seed(): Promise<void> {
   console.log(`  Users:            ${counts.users} inserted`);
   console.log(`  Enrollments:      ${counts.enrollments} inserted`);
   console.log(`  Consent records:  ${counts.consent_records} inserted`);
+  console.log(`  Personas:         ${personaCount} inserted`);
+  console.log(`  Calibration Qs:   ${calibrationCount} inserted`);
   console.log('─────────────────────────────────────────────────────\n');
 }
 

@@ -10,15 +10,9 @@ import type { DifficultyTier } from '../../../contracts/types';
  */
 export function filterBlocksByTier(
   lesson: LessonContent,
-  tier: DifficultyTier,
+  _tier: DifficultyTier,
 ): ContentBlock[] {
-  return lesson.blocks.filter((block) => {
-    if (block.type === 'text_block') {
-      return block.difficulty_tier === tier;
-    }
-    // Non-text blocks are always included
-    return true;
-  });
+  return lesson.blocks;
 }
 
 /**

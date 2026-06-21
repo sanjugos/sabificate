@@ -15,7 +15,7 @@ export function exampleBrief(): CourseBrief {
     description:
       'A comprehensive course covering financial statement analysis, credit risk assessment, and regulatory compliance for professionals in the Nigerian banking sector.',
     category: 'Finance',
-    difficulty_level: 'intermediate',
+    difficulty_level: 'working',
     professional_body: 'CIBN',
     cpd_hours: 12,
     industry_vertical: 'Banking',

@@ -7,9 +7,9 @@ import { z } from 'zod';
 // ── Enums ────────────────────────────────────────────────────────────
 
 export const DifficultyTierSchema = z.enum([
-  'beginner',
-  'intermediate',
-  'advanced',
+  'foundational',
+  'working',
+  'applied',
 ]);
 
 export const BloomLevelSchema = z.enum([

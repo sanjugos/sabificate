@@ -3,7 +3,7 @@
  *
  * Takes baseline lesson content (text + quiz blocks) at the course's
  * default difficulty and produces two additional difficulty variants
- * (beginner, intermediate, advanced — whichever two are missing).
+ * (foundational, working, applied — whichever two are missing).
  *
  * Each variant rewrites text blocks and adjusts quiz difficulty while
  * preserving the same topic coverage and learning objectives.
@@ -27,7 +27,7 @@ import {
 // ── Types ────────────────────────────────────────────────────────────
 
 const VariantSchema = z.object({
-  difficulty_tier: z.enum(['beginner', 'intermediate', 'advanced']),
+  difficulty_tier: z.enum(['foundational', 'working', 'applied']),
   text_blocks: z.array(TextBlockSchema).min(1),
   quiz_blocks: z.array(QuizBlockSchema).min(1),
 });
@@ -55,7 +55,7 @@ export interface AdaptiveVariantInput {
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-const ALL_TIERS: DifficultyTier[] = ['beginner', 'intermediate', 'advanced'];
+const ALL_TIERS: DifficultyTier[] = ['foundational', 'working', 'applied'];
 
 function getMissingTiers(baseline: DifficultyTier): DifficultyTier[] {
   return ALL_TIERS.filter((t) => t !== baseline);
@@ -71,15 +71,15 @@ function buildSystemPrompt(input: AdaptiveVariantInput): string {
 ROLE: Given baseline lesson content at "${input.baselineDifficulty}" level, create two variants at different difficulty tiers: ${missingTiers.join(' and ')}.
 
 VARIANT GUIDELINES:
-- **beginner**: Simpler vocabulary, more examples, more step-by-step explanations. Quiz questions focus on "remember" and "understand" Bloom's levels. Use relatable Nigerian everyday analogies.
-- **intermediate**: Balanced explanations with professional context. Mix of "understand", "apply", and "analyze" quiz questions. Reference Nigerian industry standards.
-- **advanced**: Concise, assumes prior knowledge. Complex scenarios, edge cases, regulatory nuances. Quiz questions at "analyze", "evaluate", and "create" levels. Reference specific CBN circulars, IFRS standards, professional body frameworks.
+- **foundational**: Simpler vocabulary, more examples, more step-by-step explanations. Quiz questions focus on "remember" and "understand" Bloom's levels. Use relatable Nigerian everyday analogies. One concept at a time, templates provided.
+- **working**: Balanced explanations with professional context. Mix of "understand", "apply", and "analyze" quiz questions. Reference Nigerian industry standards. 2-3 concepts per lesson, self-solve with hints.
+- **applied**: Concise, assumes prior knowledge. Complex scenarios, edge cases, regulatory nuances. Quiz questions at "analyze", "evaluate", and "create" levels. Reference specific CBN circulars, IFRS standards, professional body frameworks. Open problems, tradeoff analysis.
 
 CONSTRAINTS:
 - Each text_block must be under 300 words.
 - Preserve the same topic coverage and learning objectives as the baseline.
 - Adapt language, depth, and examples — do NOT just copy.
-- Text block IDs: "tb-{lessonId}-{tier[0]}-{index}" (e.g., "tb-lesson-001-b-00" for beginner).
+- Text block IDs: "tb-{lessonId}-{tier[0]}-{index}" (e.g., "tb-lesson-001-f-00" for foundational).
 - Quiz block IDs: "qb-{lessonId}-{tier[0]}-{index}".
 - Each variant must have the same number of text blocks as the baseline (or within +/-1).
 - Each variant must have 3-5 quiz blocks.

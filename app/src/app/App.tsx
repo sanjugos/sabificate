@@ -14,6 +14,8 @@ const Credentials = lazy(() => import('./pages/Credentials'));
 const PublicVerify = lazy(() => import('./pages/PublicVerify'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const Pricing = lazy(() => import('./pages/Pricing'));
 
 function PageLoader() {
   return (
@@ -31,6 +33,7 @@ export default function App() {
           {/* Auth routes — no AppShell */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/onboarding" element={<Onboarding />} />
 
           {/* Public verification — no AppShell */}
           <Route path="/verify/:credentialId" element={<PublicVerify />} />
@@ -47,6 +50,7 @@ export default function App() {
             <Route path="admin" element={<AdminDashboard />} />
             <Route path="profile" element={<Profile />} />
             <Route path="credentials" element={<Credentials />} />
+            <Route path="pricing" element={<Pricing />} />
           </Route>
         </Routes>
       </Suspense>

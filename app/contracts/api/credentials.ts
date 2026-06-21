@@ -1,8 +1,9 @@
-import type { CredentialStatus } from '../types';
+import type { CredentialStatus, CredentialType } from '../types';
 
 export interface IssueCredentialRequest {
   user_id: string;
   course_id: string;
+  credential_tier?: CredentialType;
   evidence_urls?: string[];
 }
 
@@ -16,6 +17,9 @@ export interface Credential {
   verification_url: string;
   qr_code_url: string;
   status: CredentialStatus;
+  credential_tier: CredentialType | null;
+  assessment_score: number | null;
+  cpd_hours_awarded: number | null;
   co_brand_org_id: string | null;
   co_brand_logo_url: string | null;
   co_brand_signatory: string | null;

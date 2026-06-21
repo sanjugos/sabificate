@@ -1,13 +1,37 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 import { api } from '../../lib/api/client';
 import type { LearnerDashboard } from '../../../contracts/api/progress';
+
+interface PersonaResponse {
+  persona: { id: string; persona_slug: string } | null;
+}
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [dashboard, setDashboard] = useState<LearnerDashboard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [personaChecked, setPersonaChecked] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+
+  // Check persona onboarding status
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setPersonaChecked(true);
+      return;
+    }
+    api.get<PersonaResponse>('/learner/persona')
+      .then((res) => {
+        if (!res.persona) {
+          setNeedsOnboarding(true);
+        }
+      })
+      .catch(() => {
+        // If the call fails, don't block the dashboard
+      })
+      .finally(() => setPersonaChecked(true));
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -20,12 +44,16 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, [isAuthenticated]);
 
-  if (authLoading) {
+  if (authLoading || !personaChecked) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
       </div>
     );
+  }
+
+  if (needsOnboarding) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   if (!isAuthenticated) {

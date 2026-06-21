@@ -4,6 +4,7 @@ import * as courseService from '../services/courseService.js';
 import { verifyAccessToken } from '../auth/jwt.js';
 import { query } from '../db/index.js';
 import { TABLES } from '../db/schema.js';
+import { checkSubscriptionAccess } from '../middleware/paywall.js';
 import type { DifficultyTier } from '../../contracts/types/index.js';
 
 // ── Query schemas ──────────────────────────────────────────────────────────
@@ -17,7 +18,7 @@ const courseListSchema = z.object({
 });
 
 const lessonContentQuerySchema = z.object({
-  tier: z.enum(['beginner', 'intermediate', 'advanced']).default('beginner'),
+  tier: z.enum(['foundational', 'working', 'applied']).optional(),
 });
 
 // ── Plugin ─────────────────────────────────────────────────────────────────
@@ -74,13 +75,12 @@ export default async function coursesRoutes(fastify: FastifyInstance) {
     },
   );
 
-  // GET /api/v1/courses/:slug/content/:lessonId — lesson content (requires auth)
+  // GET /api/v1/courses/:slug/content/:lessonId — lesson content
   fastify.get<{
     Params: { slug: string; lessonId: string };
     Querystring: { tier?: string };
   }>(
     '/api/v1/courses/:slug/content/:lessonId',
-    { preHandler: [fastify.authenticate] },
     async (request, reply) => {
       const parsed = lessonContentQuerySchema.safeParse(request.query);
       if (!parsed.success) {
@@ -91,11 +91,46 @@ export default async function coursesRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const tier = parsed.data.tier as DifficultyTier;
+      // Optional auth — free lessons work without login
+      let userId: string | null = null;
+      let orgId: string | null = null;
+      const authHeader = request.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const payload = verifyAccessToken(authHeader.slice(7));
+          userId = payload.user_id;
+          orgId = payload.org_id;
+        } catch {
+          // Invalid token — continue as unauthenticated
+        }
+      }
+
+      // Paywall check
+      const access = await checkSubscriptionAccess(
+        request.params.lessonId,
+        userId,
+        orgId,
+      );
+
+      if (!access.allowed) {
+        return reply.status(402).send({
+          statusCode: 402,
+          error: access.error,
+          message: access.message,
+          redirect: access.redirect,
+        });
+      }
+
+      // Determine tier: explicit query param or auto-detect from user persona
+      const explicitTier = (request.query as { tier?: string }).tier;
+      const tier = explicitTier
+        ? (parsed.data.tier as DifficultyTier)
+        : undefined;
+
       const result = await courseService.getLessonContent(
         request.params.lessonId,
         tier,
-        request.user.user_id,
+        userId,
       );
 
       if (!result) {
@@ -112,6 +147,15 @@ export default async function coursesRoutes(fastify: FastifyInstance) {
           error: 'Forbidden',
           message: 'You must be enrolled in this course to access lesson content',
         });
+      }
+
+      // Attach degraded access metadata if in grace period
+      if (access.degraded) {
+        return {
+          ...result.content,
+          degraded_access: true,
+          days_remaining: access.daysRemaining,
+        };
       }
 
       return result.content;

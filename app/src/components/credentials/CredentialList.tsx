@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { Credential } from '../../../contracts/api/credentials';
+import type { CredentialType } from '../../../contracts/types';
 import { api } from '../../lib/api/client';
 
 interface CredentialListProps {
   onSelect: (credential: Credential) => void;
+  onUpgrade?: (credential: Credential) => void;
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -12,12 +14,39 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   expired: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Expired' },
 };
 
+const TIER_STYLES: Record<CredentialType, { bg: string; text: string; border: string; label: string }> = {
+  completion_badge: {
+    bg: 'bg-green-50',
+    text: 'text-green-700',
+    border: 'border-green-200',
+    label: 'Completion Badge',
+  },
+  verified_certificate: {
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+    label: 'Verified Certificate',
+  },
+  team_record: {
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    border: 'border-purple-200',
+    label: 'Team Record',
+  },
+  professional_certificate: {
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    border: 'border-amber-200',
+    label: 'Professional Certificate',
+  },
+};
+
 async function fetchCredentials(): Promise<Credential[]> {
   const body = await api.get<{ credentials: Credential[] }>('/credentials');
   return body.credentials;
 }
 
-export function CredentialList({ onSelect }: CredentialListProps) {
+export function CredentialList({ onSelect, onUpgrade }: CredentialListProps) {
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,53 +118,113 @@ export function CredentialList({ onSelect }: CredentialListProps) {
     );
   }
 
+  // Determine which courses have a completion_badge but no verified_certificate
+  const courseCredentialTiers = new Map<string, Set<string>>();
+  for (const cred of credentials) {
+    if (!courseCredentialTiers.has(cred.course_id)) {
+      courseCredentialTiers.set(cred.course_id, new Set());
+    }
+    if (cred.credential_tier) {
+      courseCredentialTiers.get(cred.course_id)!.add(cred.credential_tier);
+    }
+  }
+
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {credentials.map((credential) => {
-        const style = STATUS_STYLES[credential.status] ?? STATUS_STYLES.active;
+        const statusStyle = STATUS_STYLES[credential.status] ?? STATUS_STYLES.active;
+        const tier = credential.credential_tier ?? 'completion_badge';
+        const tierStyle = TIER_STYLES[tier] ?? TIER_STYLES.completion_badge;
+
+        // Show upgrade button if this is a completion_badge and no verified_certificate exists for this course
+        const courseTiers = courseCredentialTiers.get(credential.course_id);
+        const canUpgrade =
+          tier === 'completion_badge' &&
+          credential.status === 'active' &&
+          courseTiers &&
+          !courseTiers.has('verified_certificate');
 
         return (
-          <button
+          <div
             key={credential.id}
-            type="button"
-            onClick={() => onSelect(credential)}
-            className="flex flex-col rounded-lg border border-gray-200 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className={`flex flex-col rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${tierStyle.border}`}
           >
-            {/* Co-brand logo */}
-            {credential.co_brand_logo_url && (
-              <img
-                src={credential.co_brand_logo_url}
-                alt="Partner organization"
-                className="mb-2 h-8 w-auto object-contain"
-              />
-            )}
-
-            {/* Course name */}
-            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
-              {credential.course_title}
-            </h3>
-
-            {/* Certificate number */}
-            <p className="mt-1 font-mono text-xs text-gray-500">
-              {credential.certificate_number}
-            </p>
-
-            {/* Bottom row: date + status */}
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-gray-500">
-                {new Date(credential.issued_at).toLocaleDateString('en-NG', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </span>
+            <button
+              type="button"
+              onClick={() => onSelect(credential)}
+              className="flex flex-1 flex-col text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+            >
+              {/* Tier badge */}
               <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}
+                className={`inline-flex self-start items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${tierStyle.bg} ${tierStyle.text}`}
               >
-                {style.label}
+                {tierStyle.label}
               </span>
-            </div>
-          </button>
+
+              {/* Co-brand logo */}
+              {credential.co_brand_logo_url && (
+                <img
+                  src={credential.co_brand_logo_url}
+                  alt="Partner organization"
+                  className="mt-2 h-8 w-auto object-contain"
+                />
+              )}
+
+              {/* Course name */}
+              <h3 className="mt-2 text-sm font-semibold text-gray-900 line-clamp-2">
+                {credential.course_title}
+              </h3>
+
+              {/* Certificate number */}
+              <p className="mt-1 font-mono text-xs text-gray-500">
+                {credential.certificate_number}
+              </p>
+
+              {/* Assessment score (if present) */}
+              {credential.assessment_score != null && (
+                <p className="mt-1 text-xs text-gray-600">
+                  Score: {credential.assessment_score}%
+                </p>
+              )}
+
+              {/* CPD hours (if present) */}
+              {credential.cpd_hours_awarded != null && credential.cpd_hours_awarded > 0 && (
+                <p className="mt-0.5 text-xs text-gray-600">
+                  CPD: {credential.cpd_hours_awarded} hours
+                </p>
+              )}
+
+              {/* Bottom row: date + status */}
+              <div className="mt-3 flex items-center justify-between w-full">
+                <span className="text-xs text-gray-500">
+                  {new Date(credential.issued_at).toLocaleDateString('en-NG', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </span>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}
+                >
+                  {statusStyle.label}
+                </span>
+              </div>
+            </button>
+
+            {/* Upgrade button */}
+            {canUpgrade && onUpgrade && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpgrade(credential);
+                }}
+                className="mt-3 w-full rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              >
+                Get Verified Certificate
+              </button>
+            )}
+          </div>
         );
       })}
     </div>

@@ -26,6 +26,18 @@ export const TABLES = {
   WHATSAPP_TEMPLATES: 'whatsapp_templates',
   BULK_ENROLLMENT_JOBS: 'bulk_enrollment_jobs',
   BULK_ENROLLMENT_ERRORS: 'bulk_enrollment_errors',
+  LEARNER_ARTIFACTS: 'learner_artifacts',
+  LEARNER_SCENARIO_DECISIONS: 'learner_scenario_decisions',
+  PERSONAS: 'personas',
+  CALIBRATION_QUESTIONS: 'calibration_questions',
+  USER_PERSONAS: 'user_personas',
+  CONCEPT_CATALOG: 'concept_catalog',
+  AUTHORING_TRACKS: 'authoring_tracks',
+  CPD_CREDIT_LOG: 'cpd_credit_log',
+  COURSE_COMPLIANCE_REQUIREMENTS: 'course_compliance_requirements',
+  CREDENTIAL_PURCHASES: 'credential_purchases',
+  REVIEW_ACTIONS: 'review_actions',
+  PROMPT_TEMPLATES: 'prompt_templates',
 } as const;
 
 // ── Key Columns ─────────────────────────────────────────────────────────────

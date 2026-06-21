@@ -293,6 +293,29 @@ export async function syncProgress(
   };
 }
 
+// ── computeCourseAssessmentScore ───────────────────────────────────────────
+
+export async function computeCourseAssessmentScore(
+  userId: string,
+  courseId: string,
+): Promise<number | null> {
+  // Count total attempts and correct attempts across all lessons in the course
+  const result = await query(
+    `SELECT
+       COUNT(*)::int AS total,
+       SUM(CASE WHEN aa.is_correct THEN 1 ELSE 0 END)::int AS correct
+     FROM assessment_attempts aa
+     JOIN lessons l ON l.id = aa.lesson_id
+     WHERE aa.user_id = $1 AND l.course_id = $2`,
+    [userId, courseId],
+  );
+
+  const row = result.rows[0];
+  if (!row || row.total === 0) return null;
+
+  return Math.round((row.correct / row.total) * 100);
+}
+
 // ── submitAssessment ───────────────────────────────────────────────────────
 
 export async function submitAssessment(

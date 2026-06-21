@@ -12,6 +12,8 @@ import adminRoutes from '../routes/admin.js';
 import paymentRoutes from '../routes/payments.js';
 import credentialRoutes from '../routes/credentials.js';
 import whatsappRoutes from '../routes/whatsapp.js';
+import personaRoutes from '../routes/personas.js';
+import complianceRoutes from '../routes/compliance.js';
 
 // ── Module augmentation ────────────────────────────────────────────────────
 
@@ -133,6 +135,8 @@ export async function buildServer() {
   await server.register(paymentRoutes);
   await server.register(credentialRoutes);
   await server.register(whatsappRoutes);
+  await server.register(personaRoutes);
+  await server.register(complianceRoutes);
 
   return server;
 }

@@ -76,7 +76,7 @@ Return ONLY valid JSON matching this structure:
       "type": "text_block",
       "id": "tb-lesson-001-00",
       "content": "...",
-      "difficulty_tier": "beginner" | "intermediate" | "advanced"
+      "difficulty_tier": "foundational" | "working" | "applied"
     }
   ]
 }
