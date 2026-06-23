@@ -16,6 +16,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Pricing = lazy(() => import('./pages/Pricing'));
+const CurriculumStudio = lazy(() => import('./pages/CurriculumStudio'));
 
 function PageLoader() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
               element={<LessonPlayer />}
             />
             <Route path="admin" element={<AdminDashboard />} />
+            <Route path="studio" element={<CurriculumStudio />} />
             <Route path="profile" element={<Profile />} />
             <Route path="credentials" element={<Credentials />} />
             <Route path="pricing" element={<Pricing />} />

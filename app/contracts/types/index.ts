@@ -1,6 +1,6 @@
 export type DifficultyTier = 'foundational' | 'working' | 'applied';
 export type BloomLevel = 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
-export type UserRole = 'learner' | 'corporate_admin' | 'platform_admin';
+export type UserRole = 'learner' | 'department_admin' | 'corporate_admin' | 'platform_admin' | 'curriculum_author' | 'sme_reviewer';
 export type DataSaverMode = 'full' | 'data_saver' | 'ultra_light';
 export type EnrollmentStatus = 'active' | 'completed' | 'suspended' | 'expired';
 export type LessonStatus = 'not_started' | 'in_progress' | 'completed';

@@ -38,6 +38,10 @@ export const TABLES = {
   CREDENTIAL_PURCHASES: 'credential_purchases',
   REVIEW_ACTIONS: 'review_actions',
   PROMPT_TEMPLATES: 'prompt_templates',
+  TRUST_CLAIMS: 'trust_claims',
+  ASSEMBLY_REVIEWS: 'assembly_reviews',
+  LANGUAGE_READINESS: 'language_readiness',
+  GENERATION_JOBS: 'generation_jobs',
 } as const;
 
 // ── Key Columns ─────────────────────────────────────────────────────────────

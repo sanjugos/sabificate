@@ -41,10 +41,12 @@ async function createInMemoryDb(): Promise<{
   // Load and execute migration SQL
   const fs = await import('fs');
   const path = await import('path');
-  const migrationPath = path.resolve(
+  const migrationsDir = path.resolve(
     path.dirname(new URL(import.meta.url).pathname),
-    '../../migrations/001_initial_schema.sql',
+    '../../migrations',
   );
+  const migrationPath = path.resolve(migrationsDir, '001_initial_schema.sql');
+  const migration002Path = path.resolve(migrationsDir, '002_curriculum_studio.sql');
 
   let sql: string;
   try {
@@ -52,6 +54,16 @@ async function createInMemoryDb(): Promise<{
   } catch (err) {
     console.warn('[dev/pg-mem] Could not read migration file:', migrationPath, err);
     sql = '';
+  }
+
+  // Append migration 002
+  try {
+    const sql002 = fs.readFileSync(migration002Path, 'utf-8');
+    if (sql002) {
+      sql = sql + '\n' + sql002;
+    }
+  } catch {
+    console.warn('[dev/pg-mem] Could not read migration 002 (optional)');
   }
 
   if (sql) {
@@ -67,12 +79,15 @@ async function createInMemoryDb(): Promise<{
 
     const createTableStmts: string[] = [];
     const indexStmts: string[] = [];
+    const alterStmts: string[] = [];
 
     for (const stmt of statements) {
       if (/^CREATE\s+TABLE/i.test(stmt)) {
         createTableStmts.push(stmt);
       } else if (/^CREATE\s+INDEX/i.test(stmt)) {
         indexStmts.push(stmt);
+      } else if (/^ALTER\s+TABLE/i.test(stmt)) {
+        alterStmts.push(stmt);
       }
     }
 
@@ -91,7 +106,7 @@ async function createInMemoryDb(): Promise<{
         tableCount++;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        const name = stmt.match(/CREATE\s+TABLE\s+(\w+)/i)?.[1] ?? '?';
+        const name = stmt.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i)?.[1] ?? '?';
         console.warn(`[dev/pg-mem] Skipped table ${name}: ${msg.slice(0, 80)}`);
       }
     }
@@ -106,7 +121,18 @@ async function createInMemoryDb(): Promise<{
       }
     }
 
-    console.log(`[dev/pg-mem] Schema loaded: ${tableCount} tables, ${indexCount} indexes`);
+    // Process ALTER TABLE statements (best-effort, pg-mem has limited ALTER support)
+    let alterCount = 0;
+    for (const stmt of alterStmts) {
+      try {
+        db.public.none(stmt);
+        alterCount++;
+      } catch {
+        // pg-mem has limited ALTER TABLE support; skip gracefully
+      }
+    }
+
+    console.log(`[dev/pg-mem] Schema loaded: ${tableCount} tables, ${indexCount} indexes, ${alterCount} alters`);
   }
 
   // Build query function that returns pg-compatible results.
