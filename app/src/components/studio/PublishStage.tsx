@@ -17,7 +17,7 @@ export function PublishStage({ track, onPublish, onUnpublish, loading }: Publish
         <h3 className="text-lg font-semibold text-gray-900">Stage 7: Publish</h3>
         <p className="text-sm text-gray-600 mt-1">
           Convert the authoring track into live courses, modules, and lessons.
-          Requires platform_admin role.
+          Requires authoring permissions.
         </p>
       </div>
 

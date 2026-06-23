@@ -20,10 +20,10 @@ const STATUS_TO_STAGE: Record<string, number> = {
   published: 6,
 };
 
-function getAuthHeaders(): HeadersInit {
+function getAuthHeaders(hasBody: boolean): HeadersInit {
   const token = localStorage.getItem('access_token');
   return {
-    'Content-Type': 'application/json',
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
@@ -31,7 +31,7 @@ function getAuthHeaders(): HeadersInit {
 async function apiFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: { ...getAuthHeaders(), ...options.headers },
+    headers: { ...getAuthHeaders(!!options.body), ...options.headers },
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || `API error ${res.status}`);
