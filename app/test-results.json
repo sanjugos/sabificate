@@ -1,0 +1,1761 @@
+{
+  "summary": {
+    "total": 84,
+    "passed": 84,
+    "failed": 0,
+    "errors": 0,
+    "passRate": "100.0%"
+  },
+  "results": [
+    {
+      "id": "H-01",
+      "section": "Health",
+      "name": "Health endpoint returns ok",
+      "method": "GET",
+      "url": "/api/v1/health",
+      "expected": "status=ok, timestamp present",
+      "actual": "status=ok, timestamp=present",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "status": "ok",
+        "timestamp": "2026-06-23T12:58:27.440Z"
+      },
+      "durationMs": 49
+    },
+    {
+      "id": "H-02",
+      "section": "Health",
+      "name": "404 for unknown routes",
+      "method": "GET",
+      "url": "/api/v1/nonexistent",
+      "expected": "status 404",
+      "actual": "status 404",
+      "status": "PASS",
+      "responseCode": 404,
+      "responseBody": {
+        "message": "Route GET:/api/v1/nonexistent not found",
+        "error": "Not Found",
+        "statusCode": 404
+      },
+      "durationMs": 4
+    },
+    {
+      "id": "REG-01",
+      "section": "Registration",
+      "name": "Reject empty body",
+      "method": "POST",
+      "url": "/api/v1/auth/register",
+      "expected": "400",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Validation failed",
+        "details": {
+          "email": [
+            "Invalid input: expected string, received undefined"
+          ],
+          "password": [
+            "Invalid input: expected string, received undefined"
+          ],
+          "first_name": [
+            "Invalid input: expected string, received undefined"
+          ],
+          "last_name": [
+            "Invalid input: expected string, received undefined"
+          ],
+          "consent": [
+            "Invalid input: expected object, received undefined"
+          ]
+        }
+      },
+      "durationMs": 11
+    },
+    {
+      "id": "REG-02",
+      "section": "Registration",
+      "name": "Reject missing consent",
+      "method": "POST",
+      "url": "/api/v1/auth/register",
+      "expected": "400 with consent error",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Validation failed",
+        "details": {
+          "consent": [
+            "Invalid input: expected object, received undefined"
+          ]
+        }
+      },
+      "durationMs": 3
+    },
+    {
+      "id": "REG-03",
+      "section": "Registration",
+      "name": "Reject invalid email",
+      "method": "POST",
+      "url": "/api/v1/auth/register",
+      "expected": "400",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Validation failed",
+        "details": {
+          "email": [
+            "Invalid email address"
+          ]
+        }
+      },
+      "durationMs": 3
+    },
+    {
+      "id": "REG-04",
+      "section": "Registration",
+      "name": "Reject short password",
+      "method": "POST",
+      "url": "/api/v1/auth/register",
+      "expected": "400",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Validation failed",
+        "details": {
+          "password": [
+            "Password must be at least 8 characters"
+          ]
+        }
+      },
+      "durationMs": 3
+    },
+    {
+      "id": "REG-05",
+      "section": "Registration",
+      "name": "Successful registration returns JWT",
+      "method": "POST",
+      "url": "/api/v1/auth/register",
+      "expected": "200 or 201 with access_token",
+      "actual": "201 token=true",
+      "status": "PASS",
+      "responseCode": 201,
+      "responseBody": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjQwYTQzYzEtMzg5Ny00MzE5LTllNTMtYzI3MWE5NDEyZGJkIiwiZW1haWwiOiJ0ZXN0cWFfMTc4MjIxOTUwNzQ3N0BleGFtcGxlLmNvbSIsInJvbGUiOiJsZWFybmVyIiwib3JnX2lkIjpudWxsLCJkZXBhcnRtZW50X2lkIjpudWxsLCJpYXQiOjE3ODIyMTk1MDcsImV4cCI6MTc4MjIyMDQwN30.i7cCGZPuRsCJa5z1v4un1Amq3437B_S2L0AlVt6o48M",
+        "token_type": "Bearer",
+        "expires_in": 900,
+        "user": {
+          "id": "640a43c1-3897-4319-9e53-c271a9412dbd",
+          "email": "testqa_1782219507477@example.com",
+          "first_name": "QA",
+          "last_name": "Tester",
+          "role": "learner",
+          "org_id": null,
+          "department_id": null,
+          "language_preference": "en",
+          "data_saver_mode": "data_saver"
+        }
+      },
+      "durationMs": 363
+    },
+    {
+      "id": "REG-06",
+      "section": "Registration",
+      "name": "User object has required fields",
+      "method": "POST",
+      "url": "/api/v1/auth/register",
+      "expected": "id, email, first_name, last_name, role=learner",
+      "actual": "id=true, role=learner",
+      "status": "PASS",
+      "responseCode": 201,
+      "responseBody": {
+        "id": "640a43c1-3897-4319-9e53-c271a9412dbd",
+        "email": "testqa_1782219507477@example.com",
+        "first_name": "QA",
+        "last_name": "Tester",
+        "role": "learner",
+        "org_id": null,
+        "department_id": null,
+        "language_preference": "en",
+        "data_saver_mode": "data_saver"
+      },
+      "durationMs": 363
+    },
+    {
+      "id": "REG-07",
+      "section": "Registration",
+      "name": "Reject duplicate email",
+      "method": "POST",
+      "url": "/api/v1/auth/register",
+      "expected": "409",
+      "actual": "409",
+      "status": "PASS",
+      "responseCode": 409,
+      "responseBody": {
+        "statusCode": 409,
+        "error": "Conflict",
+        "message": "An account with this email already exists"
+      },
+      "durationMs": 4
+    },
+    {
+      "id": "LOGIN-01",
+      "section": "Login",
+      "name": "Reject wrong password",
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "expected": "401",
+      "actual": "401",
+      "status": "PASS",
+      "responseCode": 401,
+      "responseBody": {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Invalid email or password"
+      },
+      "durationMs": 355
+    },
+    {
+      "id": "LOGIN-02",
+      "section": "Login",
+      "name": "Reject non-existent user",
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "expected": "401",
+      "actual": "401",
+      "status": "PASS",
+      "responseCode": 401,
+      "responseBody": {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Invalid email or password"
+      },
+      "durationMs": 5
+    },
+    {
+      "id": "LOGIN-03",
+      "section": "Login",
+      "name": "Reject empty body",
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "expected": "400 or 401",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Validation failed",
+        "details": {
+          "email": [
+            "Invalid input: expected string, received undefined"
+          ],
+          "password": [
+            "Invalid input: expected string, received undefined"
+          ]
+        }
+      },
+      "durationMs": 3
+    },
+    {
+      "id": "LOGIN-04",
+      "section": "Login",
+      "name": "Learner login returns JWT",
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "expected": "200 with access_token, expires_in=900",
+      "actual": "200, expires_in=900",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYTIyZTExZDEtNWI0Mi00NGM3LTkzYzAtZjFjZmVlNGUwNDYyIiwiZW1haWwiOiJkZW1vQHNhYmlmaWNhdGUuY29tIiwicm9sZSI6ImxlYXJuZXIiLCJvcmdfaWQiOm51bGwsImRlcGFydG1lbnRfaWQiOm51bGwsImlhdCI6MTc4MjIxOTUwOCwiZXhwIjoxNzgyMjIwNDA4fQ.CmbdhUfwgibAFJdGzJgOvrrJUjlsQ_yuLfMXd_r-yAw",
+        "token_type": "Bearer",
+        "expires_in": 900,
+        "user": {
+          "id": "a22e11d1-5b42-44c7-93c0-f1cfee4e0462",
+          "email": "demo@sabificate.com",
+          "first_name": "Adaeze",
+          "last_name": "Okonkwo",
+          "role": "learner",
+          "org_id": null,
+          "department_id": null,
+          "language_preference": "en",
+          "data_saver_mode": "data_saver"
+        }
+      },
+      "durationMs": 348
+    },
+    {
+      "id": "LOGIN-05",
+      "section": "Login",
+      "name": "Learner user has correct profile",
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "expected": "role=learner, first_name=Adaeze",
+      "actual": "role=learner, first_name=Adaeze",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "id": "a22e11d1-5b42-44c7-93c0-f1cfee4e0462",
+        "email": "demo@sabificate.com",
+        "first_name": "Adaeze",
+        "last_name": "Okonkwo",
+        "role": "learner",
+        "org_id": null,
+        "department_id": null,
+        "language_preference": "en",
+        "data_saver_mode": "data_saver"
+      },
+      "durationMs": 348
+    },
+    {
+      "id": "LOGIN-06",
+      "section": "Login",
+      "name": "Admin login returns JWT with org_id",
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "expected": "200, role=corporate_admin, org_id present",
+      "actual": "200, role=corporate_admin, org_id=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYzk0MmU2ZjAtOWRiZS00YmYwLWFiNTUtMGJkMjg1MjZmZWQxIiwiZW1haWwiOiJhZG1pbkBmaXJzdGJhbmstdHJhaW5pbmcubmciLCJyb2xlIjoiY29ycG9yYXRlX2FkbWluIiwib3JnX2lkIjoiNjRhYzE4OTYtMDBjYS00ZmZmLWJiNzctM2MwNWUzYjg3NjM4IiwiZGVwYXJ0bWVudF9pZCI6bnVsbCwiaWF0IjoxNzgyMjE5NTA4LCJleHAiOjE3ODIyMjA0MDh9.zWk77SuIb4ZOyXmcJvJOW-i3g84OhbdZPUAmY-SMH_s",
+        "token_type": "Bearer",
+        "expires_in": 900,
+        "user": {
+          "id": "c942e6f0-9dbe-4bf0-ab55-0bd28526fed1",
+          "email": "admin@firstbank-training.ng",
+          "first_name": "Chidi",
+          "last_name": "Nnamdi",
+          "role": "corporate_admin",
+          "org_id": "64ac1896-00ca-4fff-bb77-3c05e3b87638",
+          "department_id": null,
+          "language_preference": "en",
+          "data_saver_mode": "data_saver"
+        }
+      },
+      "durationMs": 353
+    },
+    {
+      "id": "AUTH-01",
+      "section": "Auth",
+      "name": "GET /api/v1/learner/persona requires auth",
+      "method": "GET",
+      "url": "/api/v1/learner/persona",
+      "expected": "401",
+      "actual": "401",
+      "status": "PASS",
+      "responseCode": 401,
+      "responseBody": {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Missing or invalid authorization header"
+      },
+      "durationMs": 1
+    },
+    {
+      "id": "AUTH-02",
+      "section": "Auth",
+      "name": "GET /api/v1/credentials requires auth",
+      "method": "GET",
+      "url": "/api/v1/credentials",
+      "expected": "401",
+      "actual": "401",
+      "status": "PASS",
+      "responseCode": 401,
+      "responseBody": {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Missing or invalid authorization header"
+      },
+      "durationMs": 1
+    },
+    {
+      "id": "AUTH-03",
+      "section": "Auth",
+      "name": "GET /api/v1/learner/cpd-summary requires auth",
+      "method": "GET",
+      "url": "/api/v1/learner/cpd-summary",
+      "expected": "401",
+      "actual": "401",
+      "status": "PASS",
+      "responseCode": 401,
+      "responseBody": {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Missing or invalid authorization header"
+      },
+      "durationMs": 0
+    },
+    {
+      "id": "AUTH-04",
+      "section": "Auth",
+      "name": "POST /api/v1/learner/persona requires auth",
+      "method": "POST",
+      "url": "/api/v1/learner/persona",
+      "expected": "401",
+      "actual": "401",
+      "status": "PASS",
+      "responseCode": 401,
+      "responseBody": {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Missing or invalid authorization header"
+      },
+      "durationMs": 2
+    },
+    {
+      "id": "RBAC-01",
+      "section": "Auth",
+      "name": "Learner blocked from /api/v1/admin/compliance/status",
+      "method": "GET",
+      "url": "/api/v1/admin/compliance/status",
+      "expected": "403",
+      "actual": "403",
+      "status": "PASS",
+      "responseCode": 403,
+      "responseBody": {
+        "statusCode": 403,
+        "error": "Forbidden",
+        "message": "Requires corporate_admin or platform_admin role"
+      },
+      "durationMs": 2
+    },
+    {
+      "id": "RBAC-02",
+      "section": "Auth",
+      "name": "Learner blocked from /api/v1/admin/dashboard/top-performers",
+      "method": "GET",
+      "url": "/api/v1/admin/dashboard/top-performers",
+      "expected": "403",
+      "actual": "403",
+      "status": "PASS",
+      "responseCode": 403,
+      "responseBody": {
+        "statusCode": 403,
+        "error": "Forbidden",
+        "message": "Requires corporate_admin or platform_admin role"
+      },
+      "durationMs": 1
+    },
+    {
+      "id": "RBAC-03",
+      "section": "Auth",
+      "name": "Learner blocked from /api/v1/admin/compliance/requirements",
+      "method": "POST",
+      "url": "/api/v1/admin/compliance/requirements",
+      "expected": "403",
+      "actual": "403",
+      "status": "PASS",
+      "responseCode": 403,
+      "responseBody": {
+        "statusCode": 403,
+        "error": "Forbidden",
+        "message": "Requires corporate_admin or platform_admin role"
+      },
+      "durationMs": 2
+    },
+    {
+      "id": "AUTH-05",
+      "section": "Auth",
+      "name": "Invalid JWT rejected",
+      "method": "GET",
+      "url": "/api/v1/learner/persona",
+      "expected": "401",
+      "actual": "401",
+      "status": "PASS",
+      "responseCode": 401,
+      "responseBody": {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Invalid or expired token"
+      },
+      "durationMs": 1
+    },
+    {
+      "id": "AUTH-06",
+      "section": "Auth",
+      "name": "Tampered JWT rejected",
+      "method": "GET",
+      "url": "/api/v1/learner/persona",
+      "expected": "401",
+      "actual": "401",
+      "status": "PASS",
+      "responseCode": 401,
+      "responseBody": {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Invalid or expired token"
+      },
+      "durationMs": 1
+    },
+    {
+      "id": "PERS-01",
+      "section": "Personas",
+      "name": "List personas returns 4 personas",
+      "method": "GET",
+      "url": "/api/v1/personas",
+      "expected": "200, 4 personas",
+      "actual": "200, 4 personas",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "personas": [
+          {
+            "id": "02cc8e7e-9a4d-431d-b6af-4cea9b60d3b5",
+            "vertical": "financial-literacy",
+            "slug": "new-graduate",
+            "label": "Recent Graduate",
+            "description": "Just finished school, starting my first job, learning to manage my salary",
+            "icon_svg": null,
+            "default_proficiency": "foundational",
+            "default_customer_tier": "freemium",
+            "sort_order": 0,
+            "calibration_questions": [
+              {
+                "id": "981787a9-2428-4d5c-b4a7-ed7272d388b2",
+                "persona_id": "02cc8e7e-9a4d-431d-b6af-4cea9b60d3b5",
+                "question_text": "How familiar are you with financial statements?",
+                "options": [
+                  "I've never seen one",
+                  "I've seen them but don't understand all parts",
+                  "I can read and interpret basic statements"
+                ],
+                "proficiency_map": {
+                  "0": "foundational",
+                  "1": "foundational",
+                  "2": "working"
+                },
+                "sort_order": 0
+              }
+            ]
+          },
+          {
+            "id": "13da9dd6-dcb2-4e9e-959f-fb49d9edac31",
+            "vertical": "financial-literacy",
+            "slug": "mid-career-professional",
+            "label": "Working Professional",
+            "description": "A few years into my career, looking to grow my skills and earn certifications",
+            "icon_svg": null,
+            "default_proficiency": "working",
+            "default_customer_tier": "freemium",
+            "sort_order": 1,
+            "calibration_questions": [
+              {
+                "id": "3db1f146-05e5-41d9-abfc-b989849a4747",
+                "persona_id": "13da9dd6-dcb2-4e9e-959f-fb49d9edac31",
+                "question_text": "How do you handle compliance reporting at work?",
+                "options": [
+                  "Someone else handles it",
+                  "I follow a checklist someone gave me",
+                  "I create and review compliance reports"
+                ],
+                "proficiency_map": {
+                  "0": "foundational",
+                  "1": "working",
+                  "2": "applied"
+                },
+                "sort_order": 0
+              }
+            ]
+          },
+          {
+            "id": "2da5a54c-c359-4af0-9346-bb292dce509e",
+            "vertical": "financial-literacy",
+            "slug": "team-lead-manager",
+            "label": "Team Lead / Manager",
+            "description": "Managing people and projects, need to upskill my team on compliance and best practices",
+            "icon_svg": null,
+            "default_proficiency": "working",
+            "default_customer_tier": "upskilling",
+            "sort_order": 2,
+            "calibration_questions": [
+              {
+                "id": "1b10487f-e2a3-48b0-969c-5eb35fed4a81",
+                "persona_id": "2da5a54c-c359-4af0-9346-bb292dce509e",
+                "question_text": "How do you assess your team's skill gaps?",
+                "options": [
+                  "I'm not sure how to",
+                  "I use performance reviews",
+                  "I design training programs based on competency frameworks"
+                ],
+                "proficiency_map": {
+                  "0": "working",
+                  "1": "working",
+                  "2": "applied"
+                },
+                "sort_order": 0
+              }
+            ]
+          },
+          {
+            "id": "fdd8eb99-fd66-4832-b946-4448e5222033",
+            "vertical": "financial-literacy",
+            "slug": "senior-specialist",
+            "label": "Senior Specialist",
+            "description": "Deep expertise in my field, pursuing advanced certifications and CPD credits",
+            "icon_svg": null,
+            "default_proficiency": "applied",
+            "default_customer_tier": "premium",
+            "sort_order": 3,
+            "calibration_questions": [
+              {
+                "id": "9edf9978-b8cd-40c2-915e-dda95b1ac9ec",
+                "persona_id": "fdd8eb99-fd66-4832-b946-4448e5222033",
+                "question_text": "Which best describes your certification status?",
+                "options": [
+                  "I have no professional certifications yet",
+                  "I have 1-2 active certifications",
+                  "I maintain multiple certifications and track CPD hours"
+                ],
+                "proficiency_map": {
+                  "0": "working",
+                  "1": "applied",
+                  "2": "applied"
+                },
+                "sort_order": 0
+              }
+            ]
+          }
+        ]
+      },
+      "durationMs": 9
+    },
+    {
+      "id": "PERS-02",
+      "section": "Personas",
+      "name": "Correct persona slugs",
+      "method": "GET",
+      "url": "/api/v1/personas",
+      "expected": "mid-career-professional, new-graduate, senior-specialist, team-lead-manager",
+      "actual": "mid-career-professional, new-graduate, senior-specialist, team-lead-manager",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": [
+        "mid-career-professional",
+        "new-graduate",
+        "senior-specialist",
+        "team-lead-manager"
+      ],
+      "durationMs": 9
+    },
+    {
+      "id": "PERS-03",
+      "section": "Personas",
+      "name": "All personas have calibration questions",
+      "method": "GET",
+      "url": "/api/v1/personas",
+      "expected": "all have calibration_questions",
+      "actual": "all_have=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 9
+    },
+    {
+      "id": "PERS-04",
+      "section": "Personas",
+      "name": "Proficiency maps use foundational/working/applied",
+      "method": "GET",
+      "url": "/api/v1/personas",
+      "expected": "all values in {foundational, working, applied}",
+      "actual": "all_valid=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 9
+    },
+    {
+      "id": "PERS-05",
+      "section": "Personas",
+      "name": "Set persona for new user",
+      "method": "POST",
+      "url": "/api/v1/learner/persona",
+      "expected": "200/201, resolved_tier=working",
+      "actual": "201, resolved_tier=working",
+      "status": "PASS",
+      "responseCode": 201,
+      "responseBody": {
+        "status": "success",
+        "data": {
+          "id": "1c084dfa-9cfe-42a7-80b8-bb95e3d142e2",
+          "user_id": "640a43c1-3897-4319-9e53-c271a9412dbd",
+          "vertical": "financial-literacy",
+          "persona_slug": "mid-career-professional",
+          "proficiency_level": "working",
+          "customer_tier": "freemium",
+          "calibration_answer": null,
+          "resolved_tier": "working",
+          "selected_at": "2026-06-23T12:58:28.938Z"
+        }
+      },
+      "durationMs": 13
+    },
+    {
+      "id": "PERS-06",
+      "section": "Personas",
+      "name": "Retrieve persona returns correct data",
+      "method": "GET",
+      "url": "/api/v1/learner/persona",
+      "expected": "persona_slug=mid-career-professional, proficiency_level=working",
+      "actual": "slug=mid-career-professional, level=working",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "persona": {
+          "id": "1c084dfa-9cfe-42a7-80b8-bb95e3d142e2",
+          "user_id": "640a43c1-3897-4319-9e53-c271a9412dbd",
+          "vertical": "financial-literacy",
+          "persona_slug": "mid-career-professional",
+          "proficiency_level": "working",
+          "customer_tier": "freemium",
+          "calibration_answer": null,
+          "resolved_tier": "working",
+          "selected_at": "2026-06-23T12:58:28.938Z"
+        }
+      },
+      "durationMs": 4
+    },
+    {
+      "id": "PERS-07",
+      "section": "Personas",
+      "name": "Learner persona returns data or null",
+      "method": "GET",
+      "url": "/api/v1/learner/persona",
+      "expected": "200",
+      "actual": "200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "persona": null
+      },
+      "durationMs": 3
+    },
+    {
+      "id": "PERS-08",
+      "section": "Personas",
+      "name": "Reject invalid persona slug",
+      "method": "POST",
+      "url": "/api/v1/learner/persona",
+      "expected": "400 or 404",
+      "actual": "404",
+      "status": "PASS",
+      "responseCode": 404,
+      "responseBody": {
+        "statusCode": 404,
+        "error": "Not Found",
+        "message": "Persona \"nonexistent-persona\" not found for vertical \"financial-literacy\""
+      },
+      "durationMs": 3
+    },
+    {
+      "id": "CRS-01",
+      "section": "Courses",
+      "name": "List courses returns array with pagination",
+      "method": "GET",
+      "url": "/api/v1/courses?limit=50",
+      "expected": "200, courses array, pagination object",
+      "actual": "200, courses=34, pagination=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "count": 34,
+        "pagination": {
+          "page": 1,
+          "limit": 50,
+          "total": 34,
+          "pages": 1
+        }
+      },
+      "durationMs": 116
+    },
+    {
+      "id": "CRS-02",
+      "section": "Courses",
+      "name": "At least 30 courses in catalog",
+      "method": "GET",
+      "url": "/api/v1/courses",
+      "expected": ">=30 courses",
+      "actual": "34 courses",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 116
+    },
+    {
+      "id": "CRS-03",
+      "section": "Courses",
+      "name": "All difficulty levels are foundational/working/applied",
+      "method": "GET",
+      "url": "/api/v1/courses",
+      "expected": "no invalid levels",
+      "actual": "invalid: none",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "diffLevels": [
+          "working",
+          "foundational",
+          "applied"
+        ],
+        "invalidLevels": []
+      },
+      "durationMs": 116
+    },
+    {
+      "id": "CRS-04",
+      "section": "Courses",
+      "name": "Course object has required fields",
+      "method": "GET",
+      "url": "/api/v1/courses",
+      "expected": "id, title, slug, category, difficulty_level, lesson_count, module_count",
+      "actual": "id=true, title=true, slug=true, category=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "id": "8d732c20-26de-48cd-867b-c813adb7a0b7",
+        "title": "Anti-Money Laundering Compliance",
+        "slug": "aml-compliance",
+        "description": "Comprehensive AML compliance training for Nigerian banking professionals. Covers the ML(P&P) Act 2022, CBN AML/CFT Regulations, KYC procedures, transaction monitoring, and suspicious transaction reporting. Aligned with CIBN CPD requirements.",
+        "thumbnail_url": null,
+        "category": {
+          "id": "d2e282b9-fd2b-4fe1-b13e-a93305f1c470",
+          "name": "Banking & Finance",
+          "slug": "banking-finance"
+        },
+        "difficulty_level": "working",
+        "estimated_duration_minutes": 120,
+        "cpd_hours": 4,
+        "professional_body": "CIBN",
+        "lesson_count": 5,
+        "module_count": 2
+      },
+      "durationMs": 116
+    },
+    {
+      "id": "CRS-05",
+      "section": "Courses",
+      "name": "Pagination limits results",
+      "method": "GET",
+      "url": "/api/v1/courses?limit=5",
+      "expected": "limit=5, returns <=5 courses",
+      "actual": "courses=5, limit=5",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "page": 1,
+        "limit": 5,
+        "total": 34,
+        "pages": 7
+      },
+      "durationMs": 16
+    },
+    {
+      "id": "CRS-06",
+      "section": "Courses",
+      "name": "Category filter works",
+      "method": "GET",
+      "url": "/api/v1/courses?category=banking-finance",
+      "expected": "all courses in banking-finance",
+      "actual": "count=11, all_match=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 23
+    },
+    {
+      "id": "CRS-07",
+      "section": "Courses",
+      "name": "Difficulty filter works",
+      "method": "GET",
+      "url": "/api/v1/courses?difficulty=applied",
+      "expected": "all courses have difficulty=applied",
+      "actual": "count=4, all_match=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 16
+    },
+    {
+      "id": "CRS-08",
+      "section": "Courses",
+      "name": "Search for \"AML\" returns results",
+      "method": "GET",
+      "url": "/api/v1/courses?query=AML",
+      "expected": ">=1 results containing AML",
+      "actual": "3 results",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": [
+        "Anti-Money Laundering Compliance",
+        "AML/CFT Compliance for DNFBPs",
+        "AML/KYC Compliance for Nigerian Financial Institutions"
+      ],
+      "durationMs": 15
+    },
+    {
+      "id": "CAT-01",
+      "section": "Categories",
+      "name": "List categories returns array",
+      "method": "GET",
+      "url": "/api/v1/categories",
+      "expected": "200, categories array",
+      "actual": "200, 10 categories",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "categories": [
+          {
+            "id": "d2e282b9-fd2b-4fe1-b13e-a93305f1c470",
+            "name": "Banking & Finance",
+            "slug": "banking-finance",
+            "course_count": 11
+          },
+          {
+            "id": "9a98c1de-383f-4af5-9ca6-520b0bff2399",
+            "name": "Governance & Compliance",
+            "slug": "governance-compliance",
+            "course_count": 4
+          },
+          {
+            "id": "04ecdd08-5277-46fd-909c-7375e11bf585",
+            "name": "Leadership & Management",
+            "slug": "leadership-management",
+            "course_count": 4
+          },
+          {
+            "id": "d606cb3c-5809-440f-970d-a86c7019c6b1",
+            "name": "Technology",
+            "slug": "technology",
+            "course_count": 0
+          },
+          {
+            "id": "ee3cf7b9-c1a9-4d15-83a8-ad97e6ac1dde",
+            "name": "Human Resources",
+            "slug": "human-resources",
+            "course_count": 6
+          },
+          {
+            "id": "38545422-bd4c-4216-9347-4e8c2f48aa47",
+            "name": "Professional Development",
+            "slug": "professional-development",
+            "course_count": 2
+          },
+          {
+            "id": "f35b1c97-6156-469f-972b-70aa21ab76f3",
+            "name": "Digital Skills & Technology",
+            "slug": "digital-skills",
+            "course_count": 2
+          },
+          {
+            "id": "bb2addc4-ee88-4c8e-9bbe-0e771df5f4a5",
+            "name": "Insurance & Pensions",
+            "slug": "insurance-pensions",
+            "course_count": 3
+          },
+          {
+            "id": "4a55263f-f438-4cfe-bbf1-f44d03aefcbb",
+            "name": "Health, Safety & Environment",
+            "slug": "health-safety",
+            "course_count": 1
+          },
+          {
+            "id": "67b12996-35af-4ffd-a926-10579fc16141",
+            "name": "Entrepreneurship",
+            "slug": "entrepreneurship",
+            "course_count": 1
+          }
+        ]
+      },
+      "durationMs": 19
+    },
+    {
+      "id": "CAT-02",
+      "section": "Categories",
+      "name": "Category has id, name, slug, course_count",
+      "method": "GET",
+      "url": "/api/v1/categories",
+      "expected": "id, name, slug, course_count",
+      "actual": "id=true, name=Banking & Finance, slug=banking-finance, count=11",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "id": "d2e282b9-fd2b-4fe1-b13e-a93305f1c470",
+        "name": "Banking & Finance",
+        "slug": "banking-finance",
+        "course_count": 11
+      },
+      "durationMs": 19
+    },
+    {
+      "id": "CAT-03",
+      "section": "Categories",
+      "name": "Banking & Finance has >0 courses",
+      "method": "GET",
+      "url": "/api/v1/categories",
+      "expected": "course_count > 0",
+      "actual": "course_count=11",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "id": "d2e282b9-fd2b-4fe1-b13e-a93305f1c470",
+        "name": "Banking & Finance",
+        "slug": "banking-finance",
+        "course_count": 11
+      },
+      "durationMs": 19
+    },
+    {
+      "id": "DET-01",
+      "section": "CourseDetail",
+      "name": "Get AML course by slug",
+      "method": "GET",
+      "url": "/api/v1/courses/aml-compliance",
+      "expected": "200 with title, modules, lessons",
+      "actual": "200, title=Anti-Money Laundering Compliance",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "title": "Anti-Money Laundering Compliance",
+        "module_count": 2
+      },
+      "durationMs": 13
+    },
+    {
+      "id": "DET-02",
+      "section": "CourseDetail",
+      "name": "AML has 2 modules",
+      "method": "GET",
+      "url": "/api/v1/courses/aml-compliance",
+      "expected": "2 modules",
+      "actual": "2 modules",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": [
+        "Foundations of AML in Nigeria",
+        "Transaction Monitoring & SAR Filing"
+      ],
+      "durationMs": 13
+    },
+    {
+      "id": "DET-03",
+      "section": "CourseDetail",
+      "name": "AML has 5 total lessons",
+      "method": "GET",
+      "url": "/api/v1/courses/aml-compliance",
+      "expected": "5 lessons",
+      "actual": "5 lessons",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 13
+    },
+    {
+      "id": "DET-04",
+      "section": "CourseDetail",
+      "name": "Enrollment status present",
+      "method": "GET",
+      "url": "/api/v1/courses/aml-compliance",
+      "expected": "enrollment_status field present",
+      "actual": "enrollment_status=enrolled",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 13
+    },
+    {
+      "id": "DET-05",
+      "section": "CourseDetail",
+      "name": "Non-existent slug returns 404",
+      "method": "GET",
+      "url": "/api/v1/courses/nonexistent-course-slug",
+      "expected": "404",
+      "actual": "404",
+      "status": "PASS",
+      "responseCode": 404,
+      "responseBody": {
+        "statusCode": 404,
+        "error": "Not Found",
+        "message": "Course not found"
+      },
+      "durationMs": 5
+    },
+    {
+      "id": "LES-01",
+      "section": "Lessons",
+      "name": "Get foundational tier content",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/a33ae621-4fb2-46ff-a8bb-4e6125e045d1?tier=foundational",
+      "expected": "200, tier=foundational, blocks array",
+      "actual": "200, tier=foundational, blocks=6",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "tier": "foundational",
+        "blockCount": 6
+      },
+      "durationMs": 12
+    },
+    {
+      "id": "LES-02",
+      "section": "Lessons",
+      "name": "Get working tier content",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/a33ae621-4fb2-46ff-a8bb-4e6125e045d1?tier=working",
+      "expected": "200, tier=working",
+      "actual": "200, tier=working",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "tier": "working",
+        "blockCount": 6
+      },
+      "durationMs": 5
+    },
+    {
+      "id": "LES-03",
+      "section": "Lessons",
+      "name": "Get applied tier content",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/a33ae621-4fb2-46ff-a8bb-4e6125e045d1?tier=applied",
+      "expected": "200, tier=applied",
+      "actual": "200, tier=applied",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "tier": "applied",
+        "blockCount": 6
+      },
+      "durationMs": 5
+    },
+    {
+      "id": "LES-04",
+      "section": "Lessons",
+      "name": "Foundational and applied content differ",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/...",
+      "expected": "different content for different tiers",
+      "actual": "foundational_start=\"## What Is Money Laundering?\n\nMoney laun\", applied_start=\"## Regulatory Architecture and Inter-Age\"",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 0
+    },
+    {
+      "id": "LES-05",
+      "section": "Lessons",
+      "name": "Auto-tier resolves from persona",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/a33ae621-4fb2-46ff-a8bb-4e6125e045d1",
+      "expected": "200, tier auto-resolved",
+      "actual": "200, tier=foundational",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "tier": "foundational"
+      },
+      "durationMs": 6
+    },
+    {
+      "id": "LES-06",
+      "section": "Lessons",
+      "name": "All blocks have valid types",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/...",
+      "expected": "types in {text_block, quiz_block, artifact_prompt_block, scenario_block, decision_tree}",
+      "actual": "types: text_block, quiz_block",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 0
+    },
+    {
+      "id": "LES-07",
+      "section": "Lessons",
+      "name": "Quiz blocks have question, options, correct_answer, explanation",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/...",
+      "expected": "all quiz blocks valid",
+      "actual": "3 quiz blocks, all_valid=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "type": "quiz_block",
+        "id": "l1-b-q1",
+        "question": "What is the primary goal of money laundering?",
+        "options": [
+          "To increase the amount of money a criminal has",
+          "To make illegally obtained money appear legitimate",
+          "To avoid paying taxes on legal income",
+          "To transfer money between countries"
+        ],
+        "correct_answer": 1,
+        "explanation": "Money laundering is specifically about disguising the origins of illegally obtained money so it appears to come from a legitimate source.",
+        "bloom_level": "remember",
+        "difficulty": "beginner"
+      },
+      "durationMs": 0
+    },
+    {
+      "id": "LES-08",
+      "section": "Lessons",
+      "name": "Lesson has prev/next navigation",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/...",
+      "expected": "prev_lesson_id and next_lesson_id present",
+      "actual": "prev=null, next=ce8dfe6d-a97d-4dcb-8281-45837cc2779b",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 0
+    },
+    {
+      "id": "LES-09",
+      "section": "Lessons",
+      "name": "Reject old tier name \"beginner\"",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/...?tier=beginner",
+      "expected": "400",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Invalid query parameters"
+      },
+      "durationMs": 1
+    },
+    {
+      "id": "LES-10",
+      "section": "Lessons",
+      "name": "Free lesson accessible without auth",
+      "method": "GET",
+      "url": "/api/v1/courses/.../content/...",
+      "expected": "200 (free lesson)",
+      "actual": "200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 4
+    },
+    {
+      "id": "PLAN-01",
+      "section": "Plans",
+      "name": "List plans returns 6 plans",
+      "method": "GET",
+      "url": "/api/v1/plans",
+      "expected": "200, 6 plans",
+      "actual": "200, 6 plans",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": [
+        "Free Individual: NGN 0",
+        "Professional Monthly: NGN 2500",
+        "B2B Compliance Essentials: NGN 3500",
+        "B2B Professional: NGN 5500",
+        "B2B Enterprise: NGN 8000",
+        "Professional Annual: NGN 24000"
+      ],
+      "durationMs": 4
+    },
+    {
+      "id": "PLAN-02",
+      "section": "Plans",
+      "name": "Free plan at NGN 0",
+      "method": "GET",
+      "url": "/api/v1/plans",
+      "expected": "one plan with price_ngn=0",
+      "actual": "found=true, name=Free Individual",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "id": "3fb1d55e-0f9d-4444-98af-11d63c092738",
+        "name": "Free Individual",
+        "type": "individual",
+        "price_ngn": 0,
+        "billing_cycle": "monthly",
+        "features": [
+          "Access all course content",
+          "Completion badges",
+          "Community access"
+        ],
+        "max_courses": null,
+        "paystack_plan_code": null
+      },
+      "durationMs": 4
+    },
+    {
+      "id": "PLAN-03",
+      "section": "Plans",
+      "name": "Professional Monthly at NGN 2500",
+      "method": "GET",
+      "url": "/api/v1/plans",
+      "expected": "price_ngn=2500",
+      "actual": "price_ngn=2500",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "id": "2290f6c0-1b25-4931-880f-6f5e44708a74",
+        "name": "Professional Monthly",
+        "type": "individual",
+        "price_ngn": 2500,
+        "billing_cycle": "monthly",
+        "features": [
+          "Everything in Free",
+          "Verified certificates",
+          "CPD tracking",
+          "Priority support"
+        ],
+        "max_courses": null,
+        "paystack_plan_code": null
+      },
+      "durationMs": 4
+    },
+    {
+      "id": "PLAN-04",
+      "section": "Plans",
+      "name": "3 corporate (B2B) plans",
+      "method": "GET",
+      "url": "/api/v1/plans",
+      "expected": "3 corporate plans",
+      "actual": "3 corporate plans",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": [
+        "B2B Compliance Essentials",
+        "B2B Professional",
+        "B2B Enterprise"
+      ],
+      "durationMs": 4
+    },
+    {
+      "id": "PLAN-05",
+      "section": "Plans",
+      "name": "All plans have non-empty features",
+      "method": "GET",
+      "url": "/api/v1/plans",
+      "expected": "all have features array",
+      "actual": "all_have=true",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 4
+    },
+    {
+      "id": "COMP-01",
+      "section": "Compliance",
+      "name": "Get compliance status",
+      "method": "GET",
+      "url": "/api/v1/admin/compliance/status",
+      "expected": "200 with requirements array",
+      "actual": "200, 1 requirements",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "requirements": [
+          {
+            "course_id": "8d732c20-26de-48cd-867b-c813adb7a0b7",
+            "course_title": "Anti-Money Laundering Compliance",
+            "regulatory_body": "CBN",
+            "deadline": "2026-08-22",
+            "departments": [
+              {
+                "department_id": "cd714a39-bd1f-48dd-97d0-b643236bf206",
+                "department_name": "Compliance",
+                "total_employees": 0,
+                "compliant_count": 0,
+                "status": "yellow"
+              },
+              {
+                "department_id": "31430cf4-2c2f-446a-ad47-5a72b6b65d96",
+                "department_name": "Operations",
+                "total_employees": 0,
+                "compliant_count": 0,
+                "status": "yellow"
+              }
+            ]
+          }
+        ]
+      },
+      "durationMs": 20
+    },
+    {
+      "id": "COMP-02",
+      "section": "Compliance",
+      "name": "AML CBN requirement exists",
+      "method": "GET",
+      "url": "/api/v1/admin/compliance/status",
+      "expected": "regulatory_body=CBN, deadline present",
+      "actual": "body=CBN, deadline=2026-08-22",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "course_id": "8d732c20-26de-48cd-867b-c813adb7a0b7",
+        "course_title": "Anti-Money Laundering Compliance",
+        "regulatory_body": "CBN",
+        "deadline": "2026-08-22",
+        "departments": [
+          {
+            "department_id": "cd714a39-bd1f-48dd-97d0-b643236bf206",
+            "department_name": "Compliance",
+            "total_employees": 0,
+            "compliant_count": 0,
+            "status": "yellow"
+          },
+          {
+            "department_id": "31430cf4-2c2f-446a-ad47-5a72b6b65d96",
+            "department_name": "Operations",
+            "total_employees": 0,
+            "compliant_count": 0,
+            "status": "yellow"
+          }
+        ]
+      },
+      "durationMs": 20
+    },
+    {
+      "id": "COMP-03",
+      "section": "Compliance",
+      "name": "Departments have traffic light status",
+      "method": "GET",
+      "url": "/api/v1/admin/compliance/status",
+      "expected": "departments with status (red/yellow/green)",
+      "actual": "2 departments, statuses: yellow, yellow",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": [
+        {
+          "department_id": "cd714a39-bd1f-48dd-97d0-b643236bf206",
+          "department_name": "Compliance",
+          "total_employees": 0,
+          "compliant_count": 0,
+          "status": "yellow"
+        },
+        {
+          "department_id": "31430cf4-2c2f-446a-ad47-5a72b6b65d96",
+          "department_name": "Operations",
+          "total_employees": 0,
+          "compliant_count": 0,
+          "status": "yellow"
+        }
+      ],
+      "durationMs": 20
+    },
+    {
+      "id": "COMP-04",
+      "section": "Compliance",
+      "name": "Top performers endpoint works",
+      "method": "GET",
+      "url": "/api/v1/admin/dashboard/top-performers",
+      "expected": "200 with performers array",
+      "actual": "200, performers=1",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "performers": [
+          {
+            "user_id": "c942e6f0-9dbe-4bf0-ab55-0bd28526fed1",
+            "first_name": "Chidi",
+            "last_name": "Nnamdi",
+            "email": "admin@firstbank-training.ng",
+            "department": null,
+            "courses_completed": 0,
+            "courses_enrolled": 0,
+            "avg_score": 0
+          }
+        ]
+      },
+      "durationMs": 17
+    },
+    {
+      "id": "COMP-05",
+      "section": "Compliance",
+      "name": "Create new compliance requirement",
+      "method": "POST",
+      "url": "/api/v1/admin/compliance/requirements",
+      "expected": "201",
+      "actual": "201",
+      "status": "PASS",
+      "responseCode": 201,
+      "responseBody": {
+        "id": "592aad04-cadc-4ed0-b079-599e05d3a75c",
+        "org_id": "64ac1896-00ca-4fff-bb77-3c05e3b87638",
+        "course_id": "8d732c20-26de-48cd-867b-c813adb7a0b7",
+        "regulatory_body": "NDIC",
+        "compliance_deadline": "2026-12-31T00:00:00.000Z",
+        "is_mandatory": true,
+        "created_at": "2026-06-23T12:58:29.257Z"
+      },
+      "durationMs": 7
+    },
+    {
+      "id": "CRED-01",
+      "section": "Credentials",
+      "name": "List learner credentials",
+      "method": "GET",
+      "url": "/api/v1/credentials",
+      "expected": "200",
+      "actual": "200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "credentials": []
+      },
+      "durationMs": 5
+    },
+    {
+      "id": "CRED-02",
+      "section": "Credentials",
+      "name": "CPD summary returns structured data",
+      "method": "GET",
+      "url": "/api/v1/learner/cpd-summary",
+      "expected": "200, professional_body=CIBN, required_hours=40",
+      "actual": "200, body=CIBN, required=40",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "professional_body": "CIBN",
+        "period_year": 2026,
+        "total_hours": 0,
+        "required_hours": 40,
+        "remaining_hours": 40,
+        "courses": []
+      },
+      "durationMs": 5
+    },
+    {
+      "id": "ENR-01",
+      "section": "Enrollment",
+      "name": "Enroll in course",
+      "method": "POST",
+      "url": "/api/v1/courses/customer-service-excellence/enroll",
+      "expected": "200 or 201",
+      "actual": "201",
+      "status": "PASS",
+      "responseCode": 201,
+      "responseBody": {
+        "status": "success",
+        "data": {
+          "id": "97f670cd-c4ea-4ff3-88d9-d31fc6364c68",
+          "user_id": "640a43c1-3897-4319-9e53-c271a9412dbd",
+          "course_id": "28eb7c42-4e40-4fb8-a26c-57000059d87d",
+          "org_id": null,
+          "enrollment_type": "individual",
+          "status": "active",
+          "enrolled_at": "2026-06-23T12:58:29.289Z",
+          "completed_at": null
+        }
+      },
+      "durationMs": 6
+    },
+    {
+      "id": "ENR-02",
+      "section": "Enrollment",
+      "name": "Course shows enrolled status",
+      "method": "GET",
+      "url": "/api/v1/courses/customer-service-excellence",
+      "expected": "enrollment_status=enrolled",
+      "actual": "enrollment_status=enrolled",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 16
+    },
+    {
+      "id": "ENR-03",
+      "section": "Enrollment",
+      "name": "Duplicate enrollment handled gracefully",
+      "method": "POST",
+      "url": "/api/v1/courses/customer-service-excellence/enroll",
+      "expected": "200 or 409 (not 500)",
+      "actual": "409",
+      "status": "PASS",
+      "responseCode": 409,
+      "responseBody": {
+        "statusCode": 409,
+        "error": "Conflict",
+        "message": "Already enrolled in this course"
+      },
+      "durationMs": 3
+    },
+    {
+      "id": "PRG-01",
+      "section": "Progress",
+      "name": "Submit lesson progress",
+      "method": "POST",
+      "url": "/api/v1/learner/lessons/:lessonId/progress",
+      "expected": "200 or 201",
+      "actual": "200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "accepted": true,
+        "server_progress": {
+          "lesson_id": "a33ae621-4fb2-46ff-a8bb-4e6125e045d1",
+          "status": "in_progress",
+          "progress_percent": 50,
+          "completed_at": null
+        }
+      },
+      "durationMs": 7
+    },
+    {
+      "id": "PRG-02",
+      "section": "Progress",
+      "name": "Submit progress with quiz answers",
+      "method": "POST",
+      "url": "/api/v1/learner/lessons/:lessonId/progress",
+      "expected": "200 or 201",
+      "actual": "200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": {
+        "accepted": true,
+        "server_progress": {
+          "lesson_id": "a33ae621-4fb2-46ff-a8bb-4e6125e045d1",
+          "status": "in_progress",
+          "progress_percent": 75,
+          "completed_at": null
+        },
+        "conflicts": [
+          {
+            "field": "progress_percent",
+            "client_value": 75,
+            "server_value": 50,
+            "resolution": "client_wins"
+          }
+        ]
+      },
+      "durationMs": 9
+    },
+    {
+      "id": "SEC-01",
+      "section": "Security",
+      "name": "SQL injection in search is safe",
+      "method": "GET",
+      "url": "/api/v1/courses?query=injection",
+      "expected": "200 with 0 results (not a DB error)",
+      "actual": "200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 11
+    },
+    {
+      "id": "SEC-02",
+      "section": "Security",
+      "name": "SQL injection in login is safe",
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "expected": "400 or 401 (not 500)",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": null,
+      "durationMs": 1
+    },
+    {
+      "id": "SEC-03",
+      "section": "Security",
+      "name": "XSS in name field stored as plain text (React escapes on render)",
+      "method": "POST",
+      "url": "/api/v1/auth/register",
+      "expected": "registration succeeds, name stored literally (React JSX escapes on render)",
+      "actual": "status=201, first_name=<script>alert(\"xss\")</script>",
+      "status": "PASS",
+      "responseCode": 201,
+      "responseBody": null,
+      "durationMs": 368
+    },
+    {
+      "id": "SEC-04",
+      "section": "Security",
+      "name": "Rate limit plugin active (100/min global)",
+      "method": "GET",
+      "url": "/api/v1/health",
+      "expected": "200 (rate limit plugin registered at server level)",
+      "actual": "status=200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 2,
+      "error": "Global rate limit is 100/min — per-endpoint login throttling recommended as improvement"
+    },
+    {
+      "id": "EDGE-01",
+      "section": "Edge",
+      "name": "Long search query handled",
+      "method": "GET",
+      "url": "/api/v1/courses?query=aaa...(1000)",
+      "expected": "not 500",
+      "actual": "200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 12
+    },
+    {
+      "id": "EDGE-02",
+      "section": "Edge",
+      "name": "Negative page number handled",
+      "method": "GET",
+      "url": "/api/v1/courses?page=-1",
+      "expected": "not 500",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": null,
+      "durationMs": 2
+    },
+    {
+      "id": "EDGE-03",
+      "section": "Edge",
+      "name": "Limit capped at 100",
+      "method": "GET",
+      "url": "/api/v1/courses?limit=9999",
+      "expected": "<=100 courses returned",
+      "actual": "0 courses",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": null,
+      "durationMs": 1
+    },
+    {
+      "id": "EDGE-04",
+      "section": "Edge",
+      "name": "Null body on login handled",
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "expected": "400 or 401",
+      "actual": "400",
+      "status": "PASS",
+      "responseCode": 400,
+      "responseBody": null,
+      "durationMs": 5
+    },
+    {
+      "id": "EDGE-05",
+      "section": "Edge",
+      "name": "Unicode in search handled",
+      "method": "GET",
+      "url": "/api/v1/courses?query=unicode",
+      "expected": "not 500",
+      "actual": "200",
+      "status": "PASS",
+      "responseCode": 200,
+      "responseBody": null,
+      "durationMs": 11
+    }
+  ]
+}

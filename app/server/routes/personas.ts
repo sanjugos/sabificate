@@ -102,6 +102,19 @@ export default async function personaRoutes(fastify: FastifyInstance) {
       const userId = request.user.user_id;
       const { vertical, persona_slug, proficiency_level, customer_tier, calibration_answer } = parsed.data;
 
+      // Validate persona slug exists
+      const personaCheck = await query(
+        `SELECT id FROM ${TABLES.PERSONAS} WHERE slug = $1 AND vertical = $2`,
+        [persona_slug, vertical],
+      );
+      if (personaCheck.rows.length === 0) {
+        return reply.status(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: `Persona "${persona_slug}" not found for vertical "${vertical}"`,
+        });
+      }
+
       // Upsert user_personas (user_id is UNIQUE)
       const upsertResult = await query(
         `INSERT INTO ${TABLES.USER_PERSONAS} (user_id, vertical, persona_slug, proficiency_level, customer_tier, calibration_answer, resolved_tier, selected_at)

@@ -12,7 +12,7 @@ import type { DifficultyTier } from '../../contracts/types/index.js';
 const courseListSchema = z.object({
   query: z.string().optional(),
   category: z.string().optional(),
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  difficulty: z.enum(['foundational', 'working', 'applied']).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
