@@ -18,6 +18,9 @@
 | 6 | **Technology Landscape** | `technology-landscape/research.md` | PWA for Nigeria, Paystack APIs, Hetzner+Cloudflare, AI content generation | Building |
 | 7 | **Regulatory** | `regulatory/research.md` | NDPA 2023, CAC registration, FCPA, trademark, payments regulation | Complete |
 | 8 | **Curriculum Design** | `curriculum-design/research.md` | Problem-driven microlearning, adaptive difficulty, credential model, content pipeline | Complete |
+| 9 | **Tiering Architecture v3.1** | `curriculum-design/tiering-v3.1.md` | Two-axis tiering (customer × proficiency), persona gateway, 7-stage pipeline, concept_id, exit credentials | Complete |
+| 10 | **Curriculum Tool Walkthrough** | `curriculum-design/sabi-curriculum-tool-walkthrough.md` | SABI Curriculum Tool decomposition simulation — 7-stage prototype | Complete |
+| 11 | **Learner Mobile Walkthrough** | `curriculum-design/sabi-learner-mobile-walkthrough.md` | SABI Learner Mobile Course — 5-block lesson model in action | Complete |
 
 ## Cross-Container References
 
@@ -34,6 +37,31 @@ These files in other containers are relevant and readable:
 | Legal Entity Structure | `/workspaces/smarts/corpus/legal-entity-structure/research.md` | 8,323 |
 | Council Methodology | `/workspaces/smarts/moat-engine/methodology/moat_discovery_methodology.md` | — |
 | 280 Business Models | `/workspaces/refiner/library/kb_master_280_models.md` | 13,576 |
+
+## Research Sweep — 2026-06-21
+
+Deep research across 10 curriculum architecture topics. Each file contains key findings with sources, implementation insights, Nigerian context, and tools/libraries.
+
+| # | Topic | Path | Findings | Insights |
+|---|-------|------|----------|----------|
+| R1 | **Paywall & Monetization** | `research-2026-06-21/paywall-monetization.md` | 8 | 8 |
+| R2 | **Credential Verification** | `research-2026-06-21/credential-verification.md` | 8 | 9 |
+| R3 | **Persona-Based Onboarding** | `research-2026-06-21/persona-onboarding.md` | 6 | 8 |
+| R4 | **Adaptive Learning Systems** | `research-2026-06-21/adaptive-learning.md` | 8 | 8 |
+| R5 | **B2B Learning Dashboards** | `research-2026-06-21/b2b-dashboards.md` | 8 | 8 |
+| R6 | **B2B Hiring & Verification** | `research-2026-06-21/b2b-hiring-verification.md` | 8 | 8 |
+| R7 | **AI Authoring Pipeline** | `research-2026-06-21/ai-authoring-pipeline.md` | 8 | 8 |
+| R8 | **TTS & Audio Learning** | `research-2026-06-21/tts-audio-learning.md` | 7 | 8 |
+| R9 | **Assembly Review & QA** | `research-2026-06-21/assembly-review-qa.md` | 9 | 8 |
+| R10 | **Nigerian EdTech Market** | `research-2026-06-21/nigerian-edtech-market.md` | 9 | 8 |
+
+## Course Corpora
+
+Individual course knowledge bases for content-generation agents:
+
+| # | Course | Path | Description | Status |
+|---|--------|------|-------------|--------|
+| 1 | **Better Business Presentations** | `courses/better-business-presentations.md` | Presentation frameworks, Nigerian business communication, slide design, delivery, executive communication | Complete |
 
 ## How Agents Should Use This Corpus
 

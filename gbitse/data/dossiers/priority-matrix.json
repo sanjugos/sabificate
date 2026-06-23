@@ -1,0 +1,169 @@
+{
+  "metadata": {
+    "generatedAt": "2026-05-30",
+    "version": "1.0",
+    "totalDossiers": 16
+  },
+  "priorityMatrix": [
+    {
+      "rank": 1,
+      "company": "Fidelity Bank",
+      "sector": "banking",
+      "urgency": "IMMEDIATE",
+      "trigger": "CEO succession imminent (2026 tenure end), UK acquisition integration",
+      "hrContact": "Charles Nwachukwu (CHRO)",
+      "openingLine": "As Fidelity transitions from high-growth to institutional maturity, how are you building the leadership bench and people systems for a Tier 1 bank?",
+      "estimatedDealSize": "N10M-N30M"
+    },
+    {
+      "rank": 2,
+      "company": "Access Bank",
+      "sector": "banking",
+      "urgency": "HIGH",
+      "trigger": "3 C-suite departures in 18 months, new CEO Innocent Ike needs alignment",
+      "hrContact": "Emeka Dibia (Head of HR Nigeria)",
+      "openingLine": "New leadership, new era -- how are you aligning your people strategy to Innocent Ike's vision?",
+      "estimatedDealSize": "N15M-N50M"
+    },
+    {
+      "rank": 3,
+      "company": "NRS (ex-FIRS)",
+      "sector": "government",
+      "urgency": "CRITICAL",
+      "trigger": "Complete institutional rebirth -- new org, new roles, new structure as of Jan 2026",
+      "hrContact": "Angel Fadahunsi (Director, HCM)",
+      "openingLine": "The NRS is not a renamed FIRS -- it is a new institution requiring a new people architecture. We specialize in building that from the inside out.",
+      "estimatedDealSize": "N20M-N100M+"
+    },
+    {
+      "rank": 4,
+      "company": "First Bank of Nigeria",
+      "sector": "banking",
+      "urgency": "HIGH",
+      "trigger": "New ED for institutional transformation, Glassdoor culture issues",
+      "hrContact": "Olumuyiwa Olulaja (Group Head HCM&D)",
+      "openingLine": "Your new Executive Director's mandate around institutional transformation -- we help banks operationalize that at the people and culture level.",
+      "estimatedDealSize": "N10M-N40M"
+    },
+    {
+      "rank": 5,
+      "company": "Moniepoint",
+      "sector": "fintech",
+      "urgency": "CRITICAL",
+      "trigger": "500 unfilled roles, CEO public talent crisis comments, hiring Principal People Transformation",
+      "hrContact": "Chinaza Nduka-Dike (VP People Business Partnering)",
+      "openingLine": "500 open roles is not a talent market problem -- it is a people systems problem. We help high-growth fintechs build the recruitment engines and development infrastructure that attract and retain at scale.",
+      "estimatedDealSize": "N5M-N25M"
+    },
+    {
+      "rank": 6,
+      "company": "NNPC Limited",
+      "sector": "government",
+      "urgency": "HIGH",
+      "trigger": "IPO preparation, 55 senior positions reshuffled, new GCEO",
+      "hrContact": "Fatima S. Yakubu (CHRO)",
+      "openingLine": "As NNPC prepares for its historic IPO, your HR governance framework will face investor-grade scrutiny -- we help organizations pass that test.",
+      "estimatedDealSize": "N30M-N100M+"
+    },
+    {
+      "rank": 7,
+      "company": "Dangote Group",
+      "sector": "conglomerates",
+      "urgency": "HIGH",
+      "trigger": "Refinery expansion needs 95,000 workers -- largest private sector HR event in Nigerian history",
+      "hrContact": "Gloria Evelyn Byamugisha (Group CHRO)",
+      "openingLine": "Hiring 95,000 skilled Nigerians in three years is not a recruitment problem -- it is an industrial workforce strategy. We build the systems that make that possible.",
+      "estimatedDealSize": "N50M-N200M+"
+    },
+    {
+      "rank": 8,
+      "company": "Zenith Bank",
+      "sector": "banking",
+      "urgency": "MEDIUM-HIGH",
+      "trigger": "Mid-transformation 'purposeful reset' under first female CEO, 4,000 promotions, HR tech rollout",
+      "hrContact": "Dr. Joan Dim-Nwanedo (Group Head HR)",
+      "openingLine": "Your purposeful reset is delivering financial results -- how is the people architecture keeping pace?",
+      "estimatedDealSize": "N10M-N30M"
+    },
+    {
+      "rank": 9,
+      "company": "CBN",
+      "sector": "government",
+      "urgency": "HIGH",
+      "trigger": "1,000+ staff exited, institutional trauma, Consolidation Phase agenda",
+      "hrContact": "Muhammad Abba (Director HR)",
+      "openingLine": "After the necessary reset, the CBN now faces the harder task -- rebuilding institutional capability and trust with a leaner team. That is exactly the work we do.",
+      "estimatedDealSize": "N20M-N80M"
+    },
+    {
+      "rank": 10,
+      "company": "UBA",
+      "sector": "banking",
+      "urgency": "MEDIUM-HIGH",
+      "trigger": "16% workforce growth, pan-African scaling to 17,000 employees across 6 continents",
+      "hrContact": "Katrina Modupe Akindele (Group Head HR)",
+      "openingLine": "With 17,000 people across 6 continents and 16% headcount growth, how are you scaling your people infrastructure to match?",
+      "estimatedDealSize": "N15M-N50M"
+    },
+    {
+      "rank": 11,
+      "company": "OPay",
+      "sector": "fintech",
+      "urgency": "MEDIUM-HIGH",
+      "trigger": "New dual-CEO structure, 4,100+ employees, HRIS implementation",
+      "hrContact": "Ifeoma Mba (Head of HR)",
+      "openingLine": "A new leadership structure at 4,000+ employees is a defining moment -- get the organizational design right now, or spend two years fixing misalignment later.",
+      "estimatedDealSize": "N5M-N20M"
+    },
+    {
+      "rank": 12,
+      "company": "MTN Nigeria",
+      "sector": "conglomerates",
+      "urgency": "MEDIUM",
+      "trigger": "Platform pivot from telco to digital, AI operationalization across HR, MoMo PSB scaling",
+      "hrContact": "Esther Akinnukawe (CHRO)",
+      "openingLine": "The move from telco to platform company is not a technology transformation -- it is a people transformation.",
+      "estimatedDealSize": "N15M-N50M"
+    },
+    {
+      "rank": 13,
+      "company": "Sterling Bank",
+      "sector": "banking",
+      "urgency": "MEDIUM",
+      "trigger": "$400M expansion, HEART sector specialization needs niche talent pipelines",
+      "hrContact": "Dipo Adebajo (CHRO)",
+      "openingLine": "Your HEART sector specialization is unique in Nigerian banking -- how are you building the specialized talent pipelines these sectors demand?",
+      "estimatedDealSize": "N5M-N15M"
+    },
+    {
+      "rank": 14,
+      "company": "GTCO",
+      "sector": "banking",
+      "urgency": "MEDIUM",
+      "trigger": "CEO succession planning (Agbaje 15+ years), holdco organizational design",
+      "hrContact": "Oyiza Salu (Group Head HR)",
+      "openingLine": "The holdco transition opened new people strategy questions -- are you getting the talent mobility and culture coherence benefits the structure was designed to deliver?",
+      "estimatedDealSize": "N10M-N30M"
+    },
+    {
+      "rank": 15,
+      "company": "Interswitch",
+      "sector": "fintech",
+      "urgency": "MEDIUM",
+      "trigger": "Developer Academy scaling, mid-career leadership gap, potential IPO",
+      "hrContact": "Franklin Ali (Group CHRO)",
+      "openingLine": "Your Developer Academy solves the junior talent pipeline brilliantly. The next frontier is building the leadership bench that turns those developers into the engineering directors and VPs of tomorrow.",
+      "estimatedDealSize": "N5M-N20M"
+    },
+    {
+      "rank": 16,
+      "company": "Nigerian Breweries",
+      "sector": "conglomerates",
+      "urgency": "MEDIUM",
+      "trigger": "New HR Director Nkechi Runsewe starting Aug 2026 -- will bring her own agenda and consultants",
+      "hrContact": "Nkechi Runsewe (HR Director, effective Aug 2026)",
+      "openingLine": "Congratulations on the appointment. As you shape your agenda at Nigerian Breweries, we would welcome the chance to share what's working in talent strategy across Nigeria's leading manufacturers.",
+      "estimatedDealSize": "N10M-N30M"
+    }
+  ]
+}

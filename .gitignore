@@ -8,3 +8,9 @@ dist/
 coverage/
 .claude/
 mark-docs/
+.deploy/
+.library/
+.swarm/
+sabificate/
+inbox/
+mark-docs.zip
