@@ -1,7 +1,9 @@
 import 'dotenv/config';
 import { seed } from './seed.js';
+import { seedCourses } from './seed-courses.js';
 
 async function main() {
+  await seedCourses();
   await seed();
 
   // Dynamically import the server (which calls main() at module level)

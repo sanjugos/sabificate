@@ -7,7 +7,7 @@ interface CourseSummary {
   description: string;
   thumbnail_url: string | null;
   category: { id: string; name: string; slug: string };
-  difficulty_level: 'beginner' | 'intermediate' | 'advanced';
+  difficulty_level: 'foundational' | 'working' | 'applied';
   estimated_duration_minutes: number;
   cpd_hours: number | null;
   professional_body: string | null;
@@ -16,9 +16,9 @@ interface CourseSummary {
 }
 
 const DIFFICULTY_STYLES: Record<string, string> = {
-  beginner: 'bg-green-100 text-green-800',
-  intermediate: 'bg-yellow-100 text-yellow-800',
-  advanced: 'bg-red-100 text-red-800',
+  foundational: 'bg-green-100 text-green-800',
+  working: 'bg-yellow-100 text-yellow-800',
+  applied: 'bg-red-100 text-red-800',
 };
 
 function formatDuration(minutes: number): string {

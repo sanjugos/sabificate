@@ -11,6 +11,7 @@ interface ContentBlockRendererProps {
   dataSaverMode: DataSaverMode;
   onQuizAnswer?: (answer: QuizAnswer) => void;
   onArtifactSubmit?: (blockId: string, text: string) => void;
+  onScenarioComplete?: (blockId: string, decisions: { nodeId: string; choiceLabel: string; feedback: string }[]) => void;
   previousQuizAnswer?: QuizAnswer;
 }
 
@@ -19,6 +20,7 @@ export function ContentBlockRenderer({
   dataSaverMode,
   onQuizAnswer,
   onArtifactSubmit,
+  onScenarioComplete,
   previousQuizAnswer,
 }: ContentBlockRendererProps) {
   switch (block.type) {
@@ -60,6 +62,8 @@ export function ContentBlockRenderer({
           regulatory_body={block.regulatory_body}
           cultural_notes={block.cultural_notes}
           decision_tree={block.decision_tree}
+          blockId={block.id}
+          onComplete={onScenarioComplete}
         />
       );
 

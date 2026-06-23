@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CourseCard } from './CourseCard';
 import { api } from '../../lib/api/client';
+import { STATIC_COURSES, STATIC_CATEGORIES } from '../../data/static-courses';
 
 /* ------------------------------------------------------------------ */
 /*  Contract types (inline — not importable from contracts in client)  */
@@ -13,7 +15,7 @@ interface CourseSummary {
   description: string;
   thumbnail_url: string | null;
   category: { id: string; name: string; slug: string };
-  difficulty_level: 'beginner' | 'intermediate' | 'advanced';
+  difficulty_level: 'foundational' | 'working' | 'applied';
   estimated_duration_minutes: number;
   cpd_hours: number | null;
   professional_body: string | null;
@@ -71,13 +73,14 @@ function SkeletonCard() {
 const PER_PAGE = 12;
 
 export function CourseCatalog() {
+  const [searchParams] = useSearchParams();
   const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,50 +103,125 @@ export function CourseCatalog() {
     setPage(1);
   }, [selectedCategory, selectedDifficulty]);
 
-  // Fetch categories once on mount
+  const [apiAvailable, setApiAvailable] = useState<boolean | null>(null);
+
+  // Client-side filter/paginate for static data
+  const staticResult = useMemo(() => {
+    let filtered = STATIC_COURSES as CourseSummary[];
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(
+        (c) => c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q),
+      );
+    }
+    if (selectedCategory) {
+      filtered = filtered.filter((c) => c.category.slug === selectedCategory);
+    }
+    if (selectedDifficulty) {
+      filtered = filtered.filter((c) => c.difficulty_level === selectedDifficulty);
+    }
+    filtered.sort((a, b) => a.title.localeCompare(b.title));
+    const start = (page - 1) * PER_PAGE;
+    return { items: filtered.slice(start, start + PER_PAGE), total: filtered.length };
+  }, [debouncedSearch, selectedCategory, selectedDifficulty, page]);
+
+  // Probe API availability once on mount
   useEffect(() => {
     let cancelled = false;
-    async function load() {
-      try {
-        const data = await api.get<CategoryListResponse>('/categories');
-        if (!cancelled) setCategories(data.categories);
-      } catch {
-        // silent
-      }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
+    api.get<CategoryListResponse>('/categories')
+      .then((data) => {
+        if (!cancelled && data?.categories?.length > 0) {
+          setCategories(data.categories);
+          setApiAvailable(true);
+        } else {
+          throw new Error('empty');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCategories(STATIC_CATEGORIES);
+          setApiAvailable(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, []);
 
-  // Fetch courses when filters / page change
-  const fetchCourses = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('limit', String(PER_PAGE));
-      if (debouncedSearch) params.set('query', debouncedSearch);
-      if (selectedCategory) params.set('category', selectedCategory);
-      if (selectedDifficulty) params.set('difficulty', selectedDifficulty);
-
-      const body = await api.get<CourseListResponse>(`/courses?${params.toString()}`);
-      setCourses(body.courses);
-      setTotal(body.pagination.total);
-    } catch {
-      setCourses([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, debouncedSearch, selectedCategory, selectedDifficulty]);
-
+  // Load courses — static immediately, API if available
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    if (apiAvailable === null) {
+      // Still probing — show static data immediately (no loading spinner)
+      setCourses(staticResult.items);
+      setTotal(staticResult.total);
+      setLoading(false);
+      return;
+    }
+
+    if (!apiAvailable) {
+      setCourses(staticResult.items);
+      setTotal(staticResult.total);
+      setLoading(false);
+      return;
+    }
+
+    // API is available — fetch live data
+    let cancelled = false;
+    setLoading(true);
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(PER_PAGE));
+    if (debouncedSearch) params.set('query', debouncedSearch);
+    if (selectedCategory) params.set('category', selectedCategory);
+    if (selectedDifficulty) params.set('difficulty', selectedDifficulty);
+
+    api.get<CourseListResponse>(`/courses?${params.toString()}`)
+      .then((body) => {
+        if (!cancelled && body?.courses?.length >= 0) {
+          setCourses(body.courses);
+          setTotal(body.pagination.total);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCourses(staticResult.items);
+          setTotal(staticResult.total);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [apiAvailable, page, debouncedSearch, selectedCategory, selectedDifficulty, staticResult]);
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+
+  const filterCounts = useMemo(() => {
+    const all = STATIC_COURSES as CourseSummary[];
+    const q = debouncedSearch.toLowerCase();
+    const afterSearch = debouncedSearch
+      ? all.filter((c) => c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q))
+      : all;
+
+    const afterSearchAndDifficulty = selectedDifficulty
+      ? afterSearch.filter((c) => c.difficulty_level === selectedDifficulty)
+      : afterSearch;
+
+    const afterSearchAndCategory = selectedCategory
+      ? afterSearch.filter((c) => c.category.slug === selectedCategory)
+      : afterSearch;
+
+    const catCounts: Record<string, number> = {};
+    for (const c of afterSearchAndDifficulty) {
+      catCounts[c.category.slug] = (catCounts[c.category.slug] || 0) + 1;
+    }
+
+    const diffCounts: Record<string, number> = { foundational: 0, working: 0, applied: 0 };
+    for (const c of afterSearchAndCategory) {
+      diffCounts[c.difficulty_level] = (diffCounts[c.difficulty_level] || 0) + 1;
+    }
+
+    return { catCounts, diffCounts, totalForCat: afterSearchAndDifficulty.length, totalForDiff: afterSearchAndCategory.length };
+  }, [debouncedSearch, selectedCategory, selectedDifficulty]);
 
   return (
     <section className="px-4 py-6 max-w-6xl mx-auto">
@@ -161,16 +239,16 @@ export function CourseCatalog() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
         >
-          <option value="">All Categories</option>
-          {categories.map((cat) => (
+          <option value="">All Categories ({filterCounts.totalForCat})</option>
+          {[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((cat) => (
             <option key={cat.id} value={cat.slug}>
-              {cat.name} ({cat.course_count})
+              {cat.name} ({filterCounts.catCounts[cat.slug] || 0})
             </option>
           ))}
         </select>
@@ -180,11 +258,13 @@ export function CourseCatalog() {
           onChange={(e) => setSelectedDifficulty(e.target.value)}
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
         >
-          <option value="">All Levels</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
+          <option value="">All Levels ({filterCounts.totalForDiff})</option>
+          <option value="foundational">Foundational ({filterCounts.diffCounts.foundational})</option>
+          <option value="working">Working ({filterCounts.diffCounts.working})</option>
+          <option value="applied">Applied ({filterCounts.diffCounts.applied})</option>
         </select>
+
+        <span className="sm:ml-auto text-sm font-medium text-gray-600">{total} course{total !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Course grid */}

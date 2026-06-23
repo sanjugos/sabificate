@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 
 export function LoginForm() {
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export function LoginForm() {
         <Link to="/forgot-password" className="text-blue-600 hover:underline">
           Forgot password?
         </Link>
-        <Link to="/register" className="text-blue-600 hover:underline">
+        <Link to={redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'} className="text-blue-600 hover:underline">
           Create account
         </Link>
       </div>

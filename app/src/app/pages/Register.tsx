@@ -1,12 +1,14 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { RegisterForm } from '../../components/auth/RegisterForm';
 import { useAuth } from '../../lib/auth/useAuth';
 
 export default function Register() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/';
 
   if (isLoading) return null;
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated) return <Navigate to={redirect} replace />;
 
   return (
     <div className="min-h-svh flex items-center justify-center bg-gray-50 p-4">

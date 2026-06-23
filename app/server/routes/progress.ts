@@ -102,6 +102,70 @@ export default async function progressRoutes(fastify: FastifyInstance) {
     },
   );
 
+  // POST /api/v1/learner/lessons/:lessonId/artifacts
+  fastify.post(
+    '/api/v1/learner/lessons/:lessonId/artifacts',
+    async (
+      request: FastifyRequest<{ Params: { lessonId: string } }>,
+      reply: FastifyReply,
+    ) => {
+      const schema = z.object({
+        block_id: z.string(),
+        response_text: z.string().min(1).max(10000),
+      });
+      const parsed = schema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Invalid artifact submission',
+        });
+      }
+
+      return progressService.submitArtifact(
+        request.user.user_id,
+        request.params.lessonId,
+        parsed.data.block_id,
+        parsed.data.response_text,
+      );
+    },
+  );
+
+  // POST /api/v1/learner/lessons/:lessonId/scenarios
+  fastify.post(
+    '/api/v1/learner/lessons/:lessonId/scenarios',
+    async (
+      request: FastifyRequest<{ Params: { lessonId: string } }>,
+      reply: FastifyReply,
+    ) => {
+      const schema = z.object({
+        block_id: z.string(),
+        decisions: z.array(
+          z.object({
+            nodeId: z.string(),
+            choiceLabel: z.string(),
+            feedback: z.string(),
+          }),
+        ),
+      });
+      const parsed = schema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Invalid scenario submission',
+        });
+      }
+
+      return progressService.submitScenarioDecisions(
+        request.user.user_id,
+        request.params.lessonId,
+        parsed.data.block_id,
+        parsed.data.decisions,
+      );
+    },
+  );
+
   // POST /api/v1/learner/assessments/:assessmentId/submit
   fastify.post(
     '/api/v1/learner/assessments/:assessmentId/submit',

@@ -8,8 +8,16 @@ export interface LessonPlayerProps {
   onProgressUpdate: (progress: ProgressUpdate) => void;
   onQuizSubmit: (answer: QuizAnswer) => void;
   onLessonComplete: () => void;
+  onArtifactSubmit?: (blockId: string, text: string) => void;
+  onScenarioComplete?: (blockId: string, decisions: ScenarioDecision[]) => void;
   dataSaverMode: DataSaverMode;
   isOffline: boolean;
+}
+
+export interface ScenarioDecision {
+  nodeId: string;
+  choiceLabel: string;
+  feedback: string;
 }
 
 export interface ProgressUpdate {

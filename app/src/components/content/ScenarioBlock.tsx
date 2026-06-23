@@ -7,6 +7,8 @@ interface ScenarioBlockProps {
   regulatory_body: string;
   cultural_notes: string;
   decision_tree: DecisionNode[];
+  blockId?: string;
+  onComplete?: (blockId: string, decisions: { nodeId: string; choiceLabel: string; feedback: string }[]) => void;
 }
 
 export function ScenarioBlock({
@@ -15,6 +17,8 @@ export function ScenarioBlock({
   regulatory_body,
   cultural_notes,
   decision_tree,
+  blockId,
+  onComplete,
 }: ScenarioBlockProps) {
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(
     decision_tree.length > 0 ? decision_tree[0].id : null,
@@ -29,23 +33,23 @@ export function ScenarioBlock({
 
   const handleChoice = useCallback(
     (option: { label: string; next_node_id: string | null; feedback: string }) => {
-      setHistory((prev) => [
-        ...prev,
-        {
-          nodeId: currentNodeId!,
-          choiceLabel: option.label,
-          feedback: option.feedback,
-        },
-      ]);
+      const newEntry = {
+        nodeId: currentNodeId!,
+        choiceLabel: option.label,
+        feedback: option.feedback,
+      };
+      const updatedHistory = [...history, newEntry];
+      setHistory(updatedHistory);
 
       if (option.next_node_id === null) {
         setCompleted(true);
         setCurrentNodeId(null);
+        if (blockId) onComplete?.(blockId, updatedHistory);
       } else {
         setCurrentNodeId(option.next_node_id);
       }
     },
-    [currentNodeId],
+    [currentNodeId, history, blockId, onComplete],
   );
 
   return (

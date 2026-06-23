@@ -100,7 +100,7 @@ export function useProgress(lessonId: string, courseId: string): UseProgressRetu
           progressPercent: update.progressPercent ?? existing?.progressPercent ?? 0,
           timeSpentSeconds: timeSpent,
           lastBlockIndex: update.lastBlockIndex ?? existing?.lastBlockIndex ?? 0,
-          difficulty: update.difficulty ?? existing?.difficulty ?? 'beginner',
+          difficulty: update.difficulty ?? existing?.difficulty ?? 'foundational',
           updatedAt: now,
         };
 

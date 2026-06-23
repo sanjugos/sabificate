@@ -51,5 +51,5 @@ export const CONTENT = {
   MAX_QUIZ_ITEMS_PER_LESSON: 5,
   MIN_APPLICATION_QUIZ_PERCENT: 40,
   WORD_COUNT_MAX_PER_BLOCK: 300,
-  DIFFICULTY_TIERS: ['beginner', 'intermediate', 'advanced'] as const,
+  DIFFICULTY_TIERS: ['foundational', 'working', 'applied'] as const,
 } as const;

@@ -3,13 +3,12 @@ import type { LessonPlayerProps, ProgressUpdate } from '../../../contracts/compo
 import type { QuizAnswer } from '../../../contracts/api/progress';
 import type { DifficultyTier } from '../../../contracts/types';
 import { ContentBlockRenderer } from '../content/ContentBlockRenderer';
-import { LessonNav } from './LessonNav';
 import { filterBlocksByTier } from '../../lib/content/contentParser';
 
 const DIFFICULTY_OPTIONS: { value: DifficultyTier; label: string }[] = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
+  { value: 'foundational', label: 'Foundational' },
+  { value: 'working', label: 'Working' },
+  { value: 'applied', label: 'Applied' },
 ];
 
 interface LessonPlayerExtendedProps extends LessonPlayerProps {
@@ -22,84 +21,97 @@ export function LessonPlayer({
   onProgressUpdate,
   onQuizSubmit,
   onLessonComplete,
+  onArtifactSubmit,
+  onScenarioComplete,
   dataSaverMode,
   onNavigate,
 }: LessonPlayerExtendedProps) {
   const [currentDifficulty, setCurrentDifficulty] = useState<DifficultyTier>(difficulty);
-  const [completedBlocks, setCompletedBlocks] = useState<Set<number>>(new Set());
+  const [cardIndex, setCardIndex] = useState(0);
+  const [viewedCards, setViewedCards] = useState<Set<number>>(new Set([0]));
   const [quizAnswers, setQuizAnswers] = useState<Map<string, QuizAnswer>>(new Map());
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const blockRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const timeStartRef = useRef<number>(Date.now());
+  const touchRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const completeFiredRef = useRef(false);
 
-  const filteredBlocks = filterBlocksByTier(lesson, currentDifficulty);
-  const totalBlocks = filteredBlocks.length;
-  const progressPercent = totalBlocks > 0
-    ? Math.round((completedBlocks.size / totalBlocks) * 100)
+  const blocks = filterBlocksByTier(lesson, currentDifficulty);
+  const totalCards = blocks.length;
+  const currentBlock = blocks[cardIndex];
+  const isLastCard = cardIndex === totalCards - 1;
+  const isFirstCard = cardIndex === 0;
+
+  const progressPercent = totalCards > 0
+    ? Math.round((viewedCards.size / totalCards) * 100)
     : 0;
 
-  // Reset state when lesson changes
+  // Reset on lesson change
   useEffect(() => {
-    setCompletedBlocks(new Set());
+    setCardIndex(0);
+    setViewedCards(new Set([0]));
     setQuizAnswers(new Map());
     timeStartRef.current = Date.now();
-    scrollContainerRef.current?.scrollTo({ top: 0 });
+    completeFiredRef.current = false;
   }, [lesson.id]);
 
-  // Track block visibility via IntersectionObserver
+  // Mark card as viewed when index changes
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = Number(entry.target.getAttribute('data-block-index'));
-            if (!isNaN(index)) {
-              setCompletedBlocks((prev) => {
-                if (prev.has(index)) return prev;
-                const next = new Set(prev);
-                next.add(index);
-                return next;
-              });
-            }
-          }
-        });
-      },
-      {
-        root: container,
-        threshold: 0.6,
-      },
-    );
-
-    blockRefs.current.forEach((el) => {
-      observer.observe(el);
+    setViewedCards((prev) => {
+      if (prev.has(cardIndex)) return prev;
+      const next = new Set(prev);
+      next.add(cardIndex);
+      return next;
     });
+  }, [cardIndex]);
 
-    return () => observer.disconnect();
-  }, [lesson.id, currentDifficulty, filteredBlocks.length]);
-
-  // Report progress when completedBlocks changes
+  // Report progress when viewed cards change
   useEffect(() => {
     const timeSpent = Math.round((Date.now() - timeStartRef.current) / 1000);
-    const maxBlockIndex = completedBlocks.size > 0
-      ? Math.max(...completedBlocks)
-      : 0;
-
     const update: ProgressUpdate = {
       lesson_id: lesson.id,
-      block_index: maxBlockIndex,
+      block_index: cardIndex,
       time_spent_seconds: timeSpent,
       progress_percent: progressPercent,
     };
-
     onProgressUpdate(update);
 
-    if (progressPercent >= 100 && completedBlocks.size === totalBlocks) {
+    if (viewedCards.size >= totalCards && totalCards > 0 && !completeFiredRef.current) {
+      completeFiredRef.current = true;
       onLessonComplete();
     }
-  }, [completedBlocks.size, progressPercent, totalBlocks, lesson.id, onProgressUpdate, onLessonComplete]);
+  }, [viewedCards.size, cardIndex, progressPercent, totalCards, lesson.id, onProgressUpdate, onLessonComplete]);
+
+  const goNext = useCallback(() => {
+    if (cardIndex < totalCards - 1) setCardIndex((i) => i + 1);
+  }, [cardIndex, totalCards]);
+
+  const goPrev = useCallback(() => {
+    if (cardIndex > 0) setCardIndex((i) => i - 1);
+  }, [cardIndex]);
+
+  // Touch swipe navigation
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      t: Date.now(),
+    };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchRef.current) return;
+      const dx = e.changedTouches[0].clientX - touchRef.current.x;
+      const dy = e.changedTouches[0].clientY - touchRef.current.y;
+      const dt = Date.now() - touchRef.current.t;
+      touchRef.current = null;
+
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50 && dt < 500) {
+        if (dx < 0) goNext();
+        else goPrev();
+      }
+    },
+    [goNext, goPrev],
+  );
 
   const handleQuizAnswer = useCallback(
     (answer: QuizAnswer) => {
@@ -113,22 +125,10 @@ export function LessonPlayer({
     [onQuizSubmit],
   );
 
-  const setBlockRef = useCallback(
-    (index: number) => (el: HTMLDivElement | null) => {
-      if (el) {
-        blockRefs.current.set(index, el);
-      } else {
-        blockRefs.current.delete(index);
-      }
-    },
-    [],
-  );
-
   return (
     <div className="flex flex-col h-full min-w-[360px]">
-      {/* Top bar: progress + difficulty */}
+      {/* Top bar: progress + title */}
       <div className="sticky top-0 z-10 bg-[var(--bg)] border-b border-[var(--border)]">
-        {/* Progress bar */}
         <div className="h-1 bg-[var(--border)]">
           <div
             className="h-full bg-[var(--accent)] transition-all duration-300"
@@ -142,13 +142,12 @@ export function LessonPlayer({
               {lesson.title}
             </h1>
             <p className="text-xs text-[var(--text)]">
-              {progressPercent}% complete
+              {cardIndex + 1} of {totalCards}
               {lesson.estimated_duration_minutes > 0 &&
                 ` · ~${lesson.estimated_duration_minutes} min`}
             </p>
           </div>
 
-          {/* Difficulty selector */}
           <select
             value={currentDifficulty}
             onChange={(e) =>
@@ -165,34 +164,26 @@ export function LessonPlayer({
         </div>
       </div>
 
-      {/* Content blocks */}
+      {/* Card content — single block at a time */}
       <div
-        ref={scrollContainerRef}
         className="flex-1 overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        <div className="divide-y divide-[var(--border)]">
-          {filteredBlocks.map((block, index) => (
-            <div
-              key={block.id}
-              ref={setBlockRef(index)}
-              data-block-index={index}
-            >
-              <ContentBlockRenderer
-                block={block}
-                dataSaverMode={dataSaverMode}
-                onQuizAnswer={handleQuizAnswer}
-                previousQuizAnswer={
-                  block.type === 'quiz_block'
-                    ? quizAnswers.get(block.id)
-                    : undefined
-                }
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Empty state */}
-        {filteredBlocks.length === 0 && (
+        {currentBlock ? (
+          <ContentBlockRenderer
+            block={currentBlock}
+            dataSaverMode={dataSaverMode}
+            onQuizAnswer={handleQuizAnswer}
+            onArtifactSubmit={onArtifactSubmit}
+            onScenarioComplete={onScenarioComplete}
+            previousQuizAnswer={
+              currentBlock.type === 'quiz_block'
+                ? quizAnswers.get(currentBlock.id)
+                : undefined
+            }
+          />
+        ) : (
           <div className="flex items-center justify-center py-16 px-4">
             <p className="text-sm text-[var(--text)] text-center">
               No content available for the {currentDifficulty} level. Try
@@ -200,13 +191,70 @@ export function LessonPlayer({
             </p>
           </div>
         )}
+      </div>
 
-        {/* Lesson navigation */}
-        <LessonNav
-          prevLessonId={lesson.prev_lesson_id}
-          nextLessonId={lesson.next_lesson_id}
-          onNavigate={(lessonId) => onNavigate?.(lessonId)}
-        />
+      {/* Bottom navigation */}
+      <div className="border-t border-[var(--border)] bg-[var(--bg)]">
+        {/* Card dots — only show when <= 15 cards */}
+        {totalCards > 0 && totalCards <= 15 && (
+          <div className="flex justify-center gap-1.5 pt-3 pb-2 px-4">
+            {blocks.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setCardIndex(i)}
+                className={`h-2 rounded-full transition-all duration-200 ${
+                  i === cardIndex
+                    ? 'bg-[var(--accent)] w-4'
+                    : viewedCards.has(i)
+                      ? 'bg-[var(--accent)] opacity-40 w-2'
+                      : 'bg-[var(--border)] w-2'
+                }`}
+                aria-label={`Go to card ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Prev / Next buttons */}
+        <div className="flex gap-3 px-4 pb-4 pt-1">
+          <button
+            type="button"
+            disabled={isFirstCard}
+            onClick={goPrev}
+            className="flex-1 min-h-[44px] rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-h)] transition-colors active:bg-[var(--accent-bg)] disabled:opacity-30 disabled:cursor-default"
+          >
+            Previous
+          </button>
+
+          {isLastCard ? (
+            lesson.next_lesson_id ? (
+              <button
+                type="button"
+                onClick={() => onNavigate?.(lesson.next_lesson_id!)}
+                className="flex-1 min-h-[44px] rounded-lg bg-[var(--accent)] text-white text-sm font-medium transition-opacity active:opacity-80"
+              >
+                Next Lesson
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="flex-1 min-h-[44px] rounded-lg bg-green-600 text-white text-sm font-medium"
+              >
+                Complete
+              </button>
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={goNext}
+              className="flex-1 min-h-[44px] rounded-lg bg-[var(--accent)] text-white text-sm font-medium transition-opacity active:opacity-80"
+            >
+              Next
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
