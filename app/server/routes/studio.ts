@@ -14,7 +14,7 @@ const trackListQuerySchema = z.object({
 
 const createTrackSchema = z.object({
   name: z.string().min(1).max(255),
-  vertical: z.string().min(1).max(100),
+  vertical: z.enum(['financial-literacy', 'banking-compliance', 'insurance', 'fintech', 'professional-development']),
   customer_tier: z.enum(['freemium', 'hiring', 'upskilling', 'premium']),
   tier_treatment: z.enum(['A', 'B', 'C']).default('A'),
   credential_type: z.enum(['completion_badge', 'verified_certificate', 'team_record', 'professional_certificate']).default('completion_badge'),
@@ -23,7 +23,7 @@ const createTrackSchema = z.object({
 
 const updateTrackSetupSchema = z.object({
   name: z.string().min(1).max(255).optional(),
-  vertical: z.string().min(1).max(100).optional(),
+  vertical: z.enum(['financial-literacy', 'banking-compliance', 'insurance', 'fintech', 'professional-development']).optional(),
   customer_tier: z.enum(['freemium', 'hiring', 'upskilling', 'premium']).optional(),
   tier_treatment: z.enum(['A', 'B', 'C']).optional(),
   credential_type: z.enum(['completion_badge', 'verified_certificate', 'team_record', 'professional_certificate']).optional(),

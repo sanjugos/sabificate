@@ -1,0 +1,300 @@
+{
+  "timestamp": "2026-06-24T13:10:20.295Z",
+  "total": 70,
+  "passed": 70,
+  "failed": 0,
+  "results": [
+    {
+      "name": "AUTH-01: Admin login",
+      "pass": true,
+      "detail": "role=corporate_admin"
+    },
+    {
+      "name": "AUTH-02: Learner login",
+      "pass": true,
+      "detail": "role=learner"
+    },
+    {
+      "name": "PERM-01: Learner denied studio tracks",
+      "pass": true
+    },
+    {
+      "name": "PERM-02: Unauth denied studio",
+      "pass": true
+    },
+    {
+      "name": "PERM-03: Learner denied concept catalog",
+      "pass": true
+    },
+    {
+      "name": "PERM-04: Learner denied track creation",
+      "pass": true
+    },
+    {
+      "name": "P1-01: Create track (financial-literacy/freemium)",
+      "pass": true
+    },
+    {
+      "name": "P1-02: Track detail matches",
+      "pass": true
+    },
+    {
+      "name": "P1-03: Intake saved",
+      "pass": true
+    },
+    {
+      "name": "P1-04: Decompose produces valid spine",
+      "pass": true,
+      "detail": "4 nodes"
+    },
+    {
+      "name": "P1-05: Spine approved",
+      "pass": true
+    },
+    {
+      "name": "P1-06: Brief with 3 personas + calibration",
+      "pass": true
+    },
+    {
+      "name": "P1-07: Generate course content",
+      "pass": true
+    },
+    {
+      "name": "P1-08: All nodes have 3 depth tiers with blocks",
+      "pass": true
+    },
+    {
+      "name": "P1-09: Trust claims generated",
+      "pass": true,
+      "detail": "5 claims"
+    },
+    {
+      "name": "P1-10: Assembly review approved",
+      "pass": true
+    },
+    {
+      "name": "P1-11: Published and visible in catalog",
+      "pass": true,
+      "detail": "4 modules, 4 lessons"
+    },
+    {
+      "name": "P2-01: Create track (insurance/premium)",
+      "pass": true
+    },
+    {
+      "name": "P2-02: Intake (generic context)",
+      "pass": true
+    },
+    {
+      "name": "P2-03: Decompose",
+      "pass": true
+    },
+    {
+      "name": "P2-04: Spine approved",
+      "pass": true
+    },
+    {
+      "name": "P2-05: Brief (null things_to_avoid, 1 persona)",
+      "pass": true
+    },
+    {
+      "name": "P2-06: Generate",
+      "pass": true
+    },
+    {
+      "name": "P2-07: Review rejected (changes_requested)",
+      "pass": true
+    },
+    {
+      "name": "P2-08: Second review approved",
+      "pass": true
+    },
+    {
+      "name": "P2-09: Published (insurance/premium)",
+      "pass": true
+    },
+    {
+      "name": "P3-01: Create track (fintech/hiring)",
+      "pass": true
+    },
+    {
+      "name": "P3-02: Full pipeline (fintech/hiring/nigerian)",
+      "pass": true
+    },
+    {
+      "name": "P3-03: Unpublish",
+      "pass": true
+    },
+    {
+      "name": "P3-04: Re-publish after unpublish",
+      "pass": true
+    },
+    {
+      "name": "TC-01: List all trust claims",
+      "pass": true,
+      "detail": "5 claims"
+    },
+    {
+      "name": "TC-02: Filter unverified claims",
+      "pass": true
+    },
+    {
+      "name": "TC-03: Verify claim with source",
+      "pass": true
+    },
+    {
+      "name": "TC-04: Filter verified claims",
+      "pass": true
+    },
+    {
+      "name": "TC-05: Unverify claim",
+      "pass": true
+    },
+    {
+      "name": "TC-06: Update source URL only",
+      "pass": true
+    },
+    {
+      "name": "TC-07: Verify second claim",
+      "pass": true
+    },
+    {
+      "name": "TC-08: 404 for nonexistent claim",
+      "pass": true
+    },
+    {
+      "name": "TC-09: 400 for empty update",
+      "pass": true
+    },
+    {
+      "name": "CAT-01: Create aml-fundamentals-001",
+      "pass": true
+    },
+    {
+      "name": "CAT-02: Create kyc-procedures-002",
+      "pass": true
+    },
+    {
+      "name": "CAT-03: Create str-filing-003",
+      "pass": true
+    },
+    {
+      "name": "CAT-04: Create claims-basics-001",
+      "pass": true
+    },
+    {
+      "name": "CAT-05: Create mobile-money-001",
+      "pass": true
+    },
+    {
+      "name": "CAT-06: Create payment-rails-002",
+      "pass": true
+    },
+    {
+      "name": "CAT-07: List all catalog entries",
+      "pass": true,
+      "detail": "6 total"
+    },
+    {
+      "name": "CAT-08: Search by name (KYC)",
+      "pass": true
+    },
+    {
+      "name": "CAT-09: Filter by domain (fintech)",
+      "pass": true
+    },
+    {
+      "name": "CAT-10: Combined domain + search filter",
+      "pass": true
+    },
+    {
+      "name": "CAT-11: Empty search returns 0 results",
+      "pass": true
+    },
+    {
+      "name": "CAT-12: Duplicate concept_id rejected",
+      "pass": true,
+      "detail": "Error: 500: ERROR: insert into \"concept_catalog\" (concept_id, name, domain, prerequisites, spine_position, id, created_at, updated_at) values ($1, $2, $3, $4, $5, $6, $7, $8) returning \"concept_id\" - duplicate key value violates unique constraint \"concept_catalog_pkey\"\nDETAIL: Key (concept_id)=(aml-fundamentals-001) already exists.\n\n🐜 This seems to be an execution error, which means that your request syntax seems okay,\n    but the resulting statement cannot be executed → Probably not a pg-mem error.\n\n*️⃣ Failed SQL statement: INSERT INTO concept_catalog (concept_id, name, domain, prerequisites, spine_position)\n         VALUES ('aml-fundamentals-001', 'Duplicate', 'test', '[]', null)\n         RETURNING *;\n\n👉 You can file an issue at https://github.com/oguimbal/pg-mem along with a way to reproduce this error (if you can), and  the stacktrace:\n\n"
+    },
+    {
+      "name": "EDGE-01: Create edge case track",
+      "pass": true
+    },
+    {
+      "name": "EDGE-02: Decompose rejected without intake",
+      "pass": true
+    },
+    {
+      "name": "EDGE-03: Generate rejected without spine",
+      "pass": true
+    },
+    {
+      "name": "EDGE-04: Publish rejected without review",
+      "pass": true
+    },
+    {
+      "name": "EDGE-05: 404 for nonexistent track",
+      "pass": true
+    },
+    {
+      "name": "EDGE-06: 400 for missing required fields",
+      "pass": true
+    },
+    {
+      "name": "EDGE-07: 400 for invalid vertical",
+      "pass": true
+    },
+    {
+      "name": "EDGE-08: 400 for invalid customer tier",
+      "pass": true
+    },
+    {
+      "name": "EDGE-09: Empty spine handled",
+      "pass": true,
+      "detail": "Error: Expected 400, got 200: {\"status\":\"success\",\"data\":{\"name\":\"Edge Case Track\",\"vertical\":\"professional-development\",\"customer_tier\":\"freemium\",\"tier_treatment\":\"A\",\"credential_type\":\"completion_badge\",\"paywall_lesson_index\":2,\"status\":\"decomposition\",\"created_by\":\"55c0a406-53b0-47a6-9a42-51879ba638c9\",\"id\":\"8791f1ea-35ea-4746-87fa-ce3c12e523d2\",\"skill_statement\":\"Test skill\",\"spine\":[],\"gateway_personas\":\"[]\",\"created_at\":\"2026-06-24T13:09:19.944Z\",\"updated_at\":\"2026-06-24T13:09:19.999Z\",\"target_learner_role\":\"Tester\",\"context_mode\":\"generic\",\"things_to_avoid\":null,\"decomposition_meta\":{\"ai_model_used\":\"mock-v1\",\"decomposed_at\":\"2026-06-24T13:09:19.987Z\",\"original_spine_count\":4,\"catalog_matches_found\":0},\"brief_meta\":\"{}\",\"generation_meta\":\"{}\",\"published_course_id\":null,\"published_at\":null}}"
+    },
+    {
+      "name": "EDGE-10: Delete rejected for decomposition status track",
+      "pass": true
+    },
+    {
+      "name": "EDGE-11: Delete draft track + verify gone",
+      "pass": true
+    },
+    {
+      "name": "EDGE-12: Invalid proficiency level rejected",
+      "pass": true
+    },
+    {
+      "name": "MGMT-01: List tracks",
+      "pass": true,
+      "detail": "5 tracks"
+    },
+    {
+      "name": "MGMT-02: Create and delete track",
+      "pass": true
+    },
+    {
+      "name": "MGMT-03: Update setup fields",
+      "pass": true
+    },
+    {
+      "name": "REG-01: Course catalog works",
+      "pass": true,
+      "detail": "5 courses"
+    },
+    {
+      "name": "REG-02: Personas endpoint works",
+      "pass": true,
+      "detail": "7 personas"
+    },
+    {
+      "name": "REG-03: Auth /me works",
+      "pass": true
+    },
+    {
+      "name": "REG-04: Health check",
+      "pass": true
+    }
+  ]
+}
