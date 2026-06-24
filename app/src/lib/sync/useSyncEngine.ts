@@ -80,9 +80,8 @@ export function useSyncEngine(): UseSyncEngineReturn {
     }
   }, []);
 
-  // Core sync logic
+  // Core sync logic — stable reference (no state in deps)
   const triggerSync = useCallback(async () => {
-    // Prevent concurrent syncs
     if (isSyncingRef.current) return;
     isSyncingRef.current = true;
 
@@ -113,13 +112,10 @@ export function useSyncEngine(): UseSyncEngineReturn {
       const success = await postSyncBatch(pending);
 
       if (success) {
-        // Mark items as synced in Dexie
         const ids = pending.map((item) => item.id).filter((id): id is number => id !== undefined);
         await db.syncQueue.where('id').anyOf(ids).modify({ synced: 1 });
 
         const now = new Date();
-
-        // Check if there are more pending items
         const remainingCount = await db.syncQueue.where('synced').equals(0).count();
 
         setState({
@@ -129,22 +125,19 @@ export function useSyncEngine(): UseSyncEngineReturn {
           error: null,
         });
 
-        // If there are more items, sync the next batch
         if (remainingCount > 0) {
           isSyncingRef.current = false;
-          // Use setTimeout to avoid stack overflow with large queues
           setTimeout(() => void triggerSync(), 100);
           return;
         }
       } else {
-        // Sync failed — keep items in queue
         const count = await db.syncQueue.where('synced').equals(0).count();
-        setState({
+        setState((prev) => ({
           status: 'error',
           pendingCount: count,
-          lastSyncAt: state.lastSyncAt,
+          lastSyncAt: prev.lastSyncAt,
           error: `${count} item${count !== 1 ? 's' : ''} waiting to sync`,
-        });
+        }));
       }
     } catch {
       const count = await refreshPendingCount();
@@ -157,7 +150,7 @@ export function useSyncEngine(): UseSyncEngineReturn {
     } finally {
       isSyncingRef.current = false;
     }
-  }, [state.lastSyncAt, refreshPendingCount]);
+  }, [refreshPendingCount]);
 
   // Sync on app foreground (visibilitychange)
   useEffect(() => {

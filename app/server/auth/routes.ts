@@ -499,7 +499,7 @@ export default async function authRoutes(fastify: FastifyInstance): Promise<void
     { preHandler: [fastify.authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const result = await query(
-        `SELECT id, email, first_name, last_name, role, org_id, data_saver_mode, avatar_url
+        `SELECT id, email, first_name, last_name, role, org_id, department_id, language_preference, data_saver_mode, avatar_url
          FROM users WHERE id = $1`,
         [request.user.user_id],
       );

@@ -56,12 +56,26 @@ const PERSONA_ICONS: Record<string, JSX.Element> = {
   ),
 };
 
+const PERSONA_COLOR_PALETTE = [
+  { border: 'border-emerald-300', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  { border: 'border-blue-300', bg: 'bg-blue-50', text: 'text-blue-700' },
+  { border: 'border-purple-300', bg: 'bg-purple-50', text: 'text-purple-700' },
+  { border: 'border-amber-300', bg: 'bg-amber-50', text: 'text-amber-700' },
+  { border: 'border-rose-300', bg: 'bg-rose-50', text: 'text-rose-700' },
+  { border: 'border-cyan-300', bg: 'bg-cyan-50', text: 'text-cyan-700' },
+  { border: 'border-indigo-300', bg: 'bg-indigo-50', text: 'text-indigo-700' },
+];
+
 const PERSONA_COLORS: Record<string, { border: string; bg: string; text: string }> = {
-  'new-graduate': { border: 'border-emerald-300', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  'mid-career-professional': { border: 'border-blue-300', bg: 'bg-blue-50', text: 'text-blue-700' },
-  'team-lead-manager': { border: 'border-purple-300', bg: 'bg-purple-50', text: 'text-purple-700' },
-  'senior-specialist': { border: 'border-amber-300', bg: 'bg-amber-50', text: 'text-amber-700' },
+  'new-graduate': PERSONA_COLOR_PALETTE[0],
+  'mid-career-professional': PERSONA_COLOR_PALETTE[1],
+  'team-lead-manager': PERSONA_COLOR_PALETTE[2],
+  'senior-specialist': PERSONA_COLOR_PALETTE[3],
 };
+
+function getPersonaColors(slug: string, index: number) {
+  return PERSONA_COLORS[slug] ?? PERSONA_COLOR_PALETTE[index % PERSONA_COLOR_PALETTE.length];
+}
 
 const TIER_DESCRIPTIONS: Record<string, { title: string; description: string }> = {
   foundational: {
@@ -192,8 +206,8 @@ export default function Onboarding() {
               </div>
             ) : (
               <div className="space-y-3">
-                {personas.map((persona) => {
-                  const colors = PERSONA_COLORS[persona.slug] ?? { border: 'border-gray-300', bg: 'bg-gray-50', text: 'text-gray-700' };
+                {personas.map((persona, i) => {
+                  const colors = getPersonaColors(persona.slug, i);
                   return (
                     <button
                       key={persona.slug}

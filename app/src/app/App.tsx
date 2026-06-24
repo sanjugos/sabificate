@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { DataSaverProvider } from '../lib/pwa/useDataSaverMode';
+import { RequireRole } from '../components/auth/RequireRole';
 
 // Lazy-loaded route components — each becomes its own chunk
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -49,13 +50,16 @@ export default function App() {
               path="courses/:slug/lessons/:lessonId"
               element={<LessonPlayer />}
             />
-            <Route path="admin" element={<AdminDashboard />} />
-            <Route path="studio" element={<CurriculumStudio />} />
-            <Route path="catalog" element={<ConceptCatalog />} />
+            <Route path="admin" element={<RequireRole role={['corporate_admin', 'platform_admin']}><AdminDashboard /></RequireRole>} />
+            <Route path="studio" element={<RequireRole role={['corporate_admin', 'platform_admin', 'curriculum_author']}><CurriculumStudio /></RequireRole>} />
+            <Route path="catalog" element={<RequireRole role={['corporate_admin', 'platform_admin', 'curriculum_author']}><ConceptCatalog /></RequireRole>} />
             <Route path="profile" element={<Profile />} />
             <Route path="credentials" element={<Credentials />} />
             <Route path="pricing" element={<Pricing />} />
           </Route>
+
+          {/* 404 catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </DataSaverProvider>

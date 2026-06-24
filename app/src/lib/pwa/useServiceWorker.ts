@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface ServiceWorkerState {
   needsUpdate: boolean;
@@ -12,6 +12,7 @@ export function useServiceWorker(): ServiceWorkerState {
   const [wbInstance, setWbInstance] = useState<{
     messageSkipWaiting: () => void;
   } | null>(null);
+  const userAppliedRef = useRef(false);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -29,7 +30,9 @@ export function useServiceWorker(): ServiceWorkerState {
       });
 
       wb.addEventListener('controlling', () => {
-        window.location.reload();
+        if (userAppliedRef.current) {
+          window.location.reload();
+        }
       });
 
       await wb.register();
@@ -48,6 +51,7 @@ export function useServiceWorker(): ServiceWorkerState {
 
   const applyUpdate = useCallback(() => {
     if (wbInstance) {
+      userAppliedRef.current = true;
       wbInstance.messageSkipWaiting();
     }
   }, [wbInstance]);

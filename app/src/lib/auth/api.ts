@@ -110,5 +110,6 @@ export async function confirmPasswordReset(
 }
 
 export async function fetchMe(): Promise<UserProfile> {
-  return apiClient.get<UserProfile>('/auth/me');
+  const res = await apiClient.get<{ status: string; data: UserProfile }>('/auth/me');
+  return res.data;
 }
