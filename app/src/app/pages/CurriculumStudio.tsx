@@ -276,7 +276,15 @@ export default function CurriculumStudio() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Curriculum Studio</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold text-gray-900">Curriculum Studio</h2>
+              <Link
+                to="/catalog"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Concept Catalog
+              </Link>
+            </div>
             <p className="text-sm text-gray-600 mt-1">7-stage authoring pipeline for course creation</p>
           </div>
           <button

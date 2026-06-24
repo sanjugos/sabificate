@@ -1,3 +1,5 @@
+import { TrustClaimsPanel } from './TrustClaimsPanel';
+
 interface SpineNode {
   index: number;
   title: string;
@@ -101,6 +103,11 @@ export function GenerateStage({ track, onGenerate, loading }: GenerateStageProps
             </div>
           ))}
         </div>
+      )}
+
+      {/* Trust Claims verification panel — shown after content has been generated */}
+      {hasContent && track?.id && (
+        <TrustClaimsPanel trackId={track.id as string} />
       )}
     </div>
   );

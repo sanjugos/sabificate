@@ -1,6 +1,17 @@
-// ── Mock AI Service for Curriculum Studio ─────────────────────────────────
-// These functions simulate AI-powered decomposition and content generation.
-// Replace with real LLM calls when ready.
+// ── AI Service for Curriculum Studio ────────────────────────────────────
+// Uses real Claude API when ANTHROPIC_API_KEY is set, falls back to mock.
+
+import Anthropic from '@anthropic-ai/sdk';
+
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+export const AI_MODE = ANTHROPIC_API_KEY ? 'claude' : 'mock';
+
+// Lazy-init client only when key is present
+function getClient(): Anthropic {
+  return new Anthropic();
+}
+
+// ── Shared interfaces ───────────────────────────────────────────────────
 
 export interface SpineNode {
   index: number;
@@ -48,14 +59,284 @@ export interface CourseGenerationResult {
   total_blocks_generated: number;
 }
 
-// ── Decompose a skill statement into spine nodes ──────────────────────────
+// ── Claude-powered decomposeSkill ───────────────────────────────────────
 
-export async function decomposeSkill(
+async function claudeDecomposeSkill(
   skillStatement: string,
   vertical: string,
   contextMode: string,
 ): Promise<SpineNode[]> {
-  // Mock: generate 4 spine nodes relevant to Nigerian financial services
+  const client = getClient();
+
+  const nigerianClause =
+    contextMode === 'nigerian'
+      ? `The curriculum targets Nigerian financial services professionals. Reference CBN (Central Bank of Nigeria), NFIU (Nigerian Financial Intelligence Unit), and FATF regulations where relevant. Use Nigerian examples, Naira denominations, and local regulatory frameworks.`
+      : '';
+
+  const systemPrompt = `You are SABIficate's curriculum decomposition engine. Given a skill statement and vertical, you produce a learning spine: a sequence of 3–6 concept nodes that build on each other from foundational to advanced.
+
+${nigerianClause}
+
+Return ONLY a JSON array of spine node objects. Each object must have:
+- index: integer starting at 0
+- concept_id: a kebab-case identifier (e.g. "aml-risk-assessment-basics")
+- title: short descriptive title
+- objective: a learner-facing objective starting with "Learner can..."
+- bloom_level: one of "remember", "understand", "apply", "analyze", "evaluate", "create"
+- artifact_intent: what artifact the learner will produce (e.g. "Risk matrix template")
+- catalog_overlap: always "new" for AI-generated nodes
+- linked_concept_catalog_id: null
+- depth_cards: null
+- trust_claim_count: 0
+- sme_approved: false
+
+Return 3–6 nodes. The sequence should progress through Bloom's taxonomy from lower to higher levels. Return valid JSON only, no markdown fences.`;
+
+  const userMessage = `Decompose this skill into a learning spine:
+
+Skill statement: ${skillStatement}
+Vertical: ${vertical}
+Context: ${contextMode}`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 2048,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const textBlock = response.content.find(
+    (block): block is Anthropic.TextBlock => block.type === 'text',
+  );
+  if (!textBlock) {
+    throw new Error('No text content in Claude response');
+  }
+
+  // Strip markdown fences if present
+  let jsonText = textBlock.text.trim();
+  if (jsonText.startsWith('```')) {
+    jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  }
+
+  const parsed: unknown[] = JSON.parse(jsonText);
+
+  // Validate and coerce to SpineNode[]
+  const nodes: SpineNode[] = parsed.map((item: unknown, i: number) => {
+    const obj = item as Record<string, unknown>;
+    return {
+      index: typeof obj.index === 'number' ? obj.index : i,
+      concept_id: typeof obj.concept_id === 'string' ? obj.concept_id : null,
+      title: typeof obj.title === 'string' ? obj.title : `Node ${i}`,
+      objective: typeof obj.objective === 'string' ? obj.objective : '',
+      bloom_level: typeof obj.bloom_level === 'string' ? obj.bloom_level : 'understand',
+      artifact_intent: typeof obj.artifact_intent === 'string' ? obj.artifact_intent : '',
+      catalog_overlap: 'new' as const,
+      linked_concept_catalog_id: null,
+      depth_cards: null,
+      trust_claim_count: 0,
+      sme_approved: false,
+    };
+  });
+
+  return nodes;
+}
+
+// ── Claude-powered generateCourse ───────────────────────────────────────
+
+async function claudeGenerateDepthCards(
+  client: Anthropic,
+  node: SpineNode,
+  brief: {
+    trackName: string;
+    vertical: string;
+    contextMode: string;
+    thingsToAvoid: string | null;
+  },
+): Promise<{
+  depthCards: NonNullable<SpineNode['depth_cards']>;
+  trustClaims: TrustClaim[];
+}> {
+  const nigerianClause =
+    brief.contextMode === 'nigerian'
+      ? `This is for Nigerian financial services professionals. Reference CBN, NFIU, and FATF regulations. Use Nigerian examples (Naira amounts, local institutions, Nigerian case studies).`
+      : '';
+
+  const avoidClause = brief.thingsToAvoid
+    ? `\nIMPORTANT: Avoid the following in generated content: ${brief.thingsToAvoid}`
+    : '';
+
+  const systemPrompt = `You are SABIficate's content generation engine. You generate depth cards for a curriculum spine node. Each spine node gets 3 depth cards: foundational, working, and applied.
+
+${nigerianClause}${avoidClause}
+
+For each depth card, generate 3 ContentBlock objects. Each block must have:
+- type: one of "text_block", "quiz_block", "scenario_block", "artifact_block"
+- id: a unique string identifier (use format "s{nodeIndex}-{tier_letter}-{type_letter}{number}")
+- For text_block: include "content" (markdown string), "difficulty_tier", "bloom_level"
+- For quiz_block: include "question", "options" (array of 4 strings), "correct_answer" (0-based index), "explanation", "bloom_level", "difficulty_tier"
+- For scenario_block: include "content" (scenario description), "difficulty_tier", "bloom_level"
+
+Also identify trust claims: factual assertions (numeric, regulatory, statistical, citation) that need verification. Return them separately.
+
+Depth tiers:
+- foundational: bloom levels "remember" and "understand" — basic concepts and definitions
+- working: bloom level "apply" — practical implementation and procedures
+- applied: bloom levels "evaluate" and "create" — critical analysis and strategic thinking
+
+Return ONLY valid JSON (no markdown fences) with this structure:
+{
+  "foundational": { "blocks": [ContentBlock, ContentBlock, ContentBlock] },
+  "working": { "blocks": [ContentBlock, ContentBlock, ContentBlock] },
+  "applied": { "blocks": [ContentBlock, ContentBlock, ContentBlock] },
+  "trust_claims": [{ "depth_tier": "...", "claim_text": "...", "claim_type": "numeric|regulatory|statistical|citation" }]
+}`;
+
+  const userMessage = `Generate depth cards for this spine node:
+
+Track: ${brief.trackName}
+Vertical: ${brief.vertical}
+Node index: ${node.index}
+Node title: ${node.title}
+Node objective: ${node.objective}
+Bloom level: ${node.bloom_level}`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 4096,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const textBlock = response.content.find(
+    (block): block is Anthropic.TextBlock => block.type === 'text',
+  );
+  if (!textBlock) {
+    throw new Error('No text content in Claude response for depth cards');
+  }
+
+  let jsonText = textBlock.text.trim();
+  if (jsonText.startsWith('```')) {
+    jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  }
+
+  const parsed = JSON.parse(jsonText) as Record<string, unknown>;
+
+  const depthCards = {
+    foundational: { blocks: parseBlocks(parsed.foundational) },
+    working: { blocks: parseBlocks(parsed.working) },
+    applied: { blocks: parseBlocks(parsed.applied) },
+  };
+
+  const rawClaims = Array.isArray(parsed.trust_claims) ? parsed.trust_claims : [];
+  const trustClaims: TrustClaim[] = rawClaims.map((c: unknown) => {
+    const claim = c as Record<string, unknown>;
+    return {
+      spine_node_index: node.index,
+      depth_tier: (typeof claim.depth_tier === 'string' ? claim.depth_tier : 'working') as
+        | 'foundational'
+        | 'working'
+        | 'applied',
+      claim_text: typeof claim.claim_text === 'string' ? claim.claim_text : '',
+      claim_type: (typeof claim.claim_type === 'string' ? claim.claim_type : 'citation') as
+        | 'numeric'
+        | 'regulatory'
+        | 'statistical'
+        | 'citation',
+      source_url: null,
+      source_label: null,
+    };
+  });
+
+  return { depthCards, trustClaims };
+}
+
+function parseBlocks(tier: unknown): ContentBlock[] {
+  if (!tier || typeof tier !== 'object') return [];
+  const obj = tier as Record<string, unknown>;
+  const blocks = Array.isArray(obj.blocks) ? obj.blocks : [];
+  return blocks.map((b: unknown) => {
+    const block = b as Record<string, unknown>;
+    return {
+      type: (typeof block.type === 'string' ? block.type : 'text_block') as ContentBlock['type'],
+      id: typeof block.id === 'string' ? block.id : `gen-${Math.random().toString(36).slice(2, 8)}`,
+      content: typeof block.content === 'string' ? block.content : undefined,
+      question: typeof block.question === 'string' ? block.question : undefined,
+      options: Array.isArray(block.options) ? (block.options as string[]) : undefined,
+      correct_answer: typeof block.correct_answer === 'number' ? block.correct_answer : undefined,
+      explanation: typeof block.explanation === 'string' ? block.explanation : undefined,
+      bloom_level: typeof block.bloom_level === 'string' ? block.bloom_level : undefined,
+      difficulty_tier: typeof block.difficulty_tier === 'string' ? block.difficulty_tier : undefined,
+    };
+  });
+}
+
+async function claudeGenerateCourse(brief: {
+  trackName: string;
+  vertical: string;
+  contextMode: string;
+  spine: SpineNode[];
+  thingsToAvoid: string | null;
+  gatewayPersonas: unknown[];
+}): Promise<CourseGenerationResult> {
+  const client = getClient();
+  const allTrustClaims: TrustClaim[] = [];
+  let totalBlocks = 0;
+
+  const enrichedSpine: SpineNode[] = [];
+
+  for (const node of brief.spine) {
+    try {
+      const { depthCards, trustClaims } = await claudeGenerateDepthCards(client, node, {
+        trackName: brief.trackName,
+        vertical: brief.vertical,
+        contextMode: brief.contextMode,
+        thingsToAvoid: brief.thingsToAvoid,
+      });
+
+      allTrustClaims.push(...trustClaims);
+      const nodeBlockCount =
+        depthCards.foundational.blocks.length +
+        depthCards.working.blocks.length +
+        depthCards.applied.blocks.length;
+      totalBlocks += nodeBlockCount;
+
+      enrichedSpine.push({
+        ...node,
+        depth_cards: depthCards,
+        trust_claim_count: trustClaims.length,
+      });
+    } catch (err) {
+      // Fall back to mock for this node on error
+      console.error(`Claude depth card generation failed for node ${node.index}, using mock:`, err);
+      const mockResult = await mockGenerateCourse({
+        trackName: brief.trackName,
+        vertical: brief.vertical,
+        contextMode: brief.contextMode,
+        spine: [node],
+        thingsToAvoid: brief.thingsToAvoid,
+        gatewayPersonas: brief.gatewayPersonas,
+      });
+      enrichedSpine.push(mockResult.spine[0]);
+      allTrustClaims.push(...mockResult.trust_claims);
+      totalBlocks += mockResult.total_blocks_generated;
+    }
+  }
+
+  return {
+    spine: enrichedSpine,
+    trust_claims: allTrustClaims,
+    languages_requested: ['en', 'pcm'],
+    total_blocks_generated: totalBlocks,
+  };
+}
+
+// ── Mock implementations (always available as fallback) ─────────────────
+
+async function mockDecomposeSkill(
+  skillStatement: string,
+  vertical: string,
+  contextMode: string,
+): Promise<SpineNode[]> {
   const nigerianContext = contextMode === 'nigerian';
   const prefix = nigerianContext ? 'Nigerian ' : '';
 
@@ -117,9 +398,7 @@ export async function decomposeSkill(
   return nodes;
 }
 
-// ── Generate course content with 3 depth cards per spine node ─────────────
-
-export async function generateCourse(brief: {
+async function mockGenerateCourse(brief: {
   trackName: string;
   vertical: string;
   contextMode: string;
@@ -270,7 +549,44 @@ export async function generateCourse(brief: {
   };
 }
 
-// ── Source claims — find sources for trust claims ─────────────────────────
+// ── Public API (dispatches to Claude or mock) ───────────────────────────
+
+export async function decomposeSkill(
+  skillStatement: string,
+  vertical: string,
+  contextMode: string,
+): Promise<SpineNode[]> {
+  if (AI_MODE === 'claude') {
+    try {
+      return await claudeDecomposeSkill(skillStatement, vertical, contextMode);
+    } catch (err) {
+      console.error('Claude decomposeSkill failed, falling back to mock:', err);
+      return mockDecomposeSkill(skillStatement, vertical, contextMode);
+    }
+  }
+  return mockDecomposeSkill(skillStatement, vertical, contextMode);
+}
+
+export async function generateCourse(brief: {
+  trackName: string;
+  vertical: string;
+  contextMode: string;
+  spine: SpineNode[];
+  thingsToAvoid: string | null;
+  gatewayPersonas: unknown[];
+}): Promise<CourseGenerationResult> {
+  if (AI_MODE === 'claude') {
+    try {
+      return await claudeGenerateCourse(brief);
+    } catch (err) {
+      console.error('Claude generateCourse failed, falling back to mock:', err);
+      return mockGenerateCourse(brief);
+    }
+  }
+  return mockGenerateCourse(brief);
+}
+
+// ── Source claims — find sources for trust claims (mock only) ────────────
 
 export async function sourceClaims(
   claims: Array<{ id: string; claim_text: string; claim_type: string }>,
