@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../lib/auth/useAuth';
+import { api } from '../../lib/api/client';
 import { StageTracker } from '../../components/studio/StageTracker';
 import { SetupStage } from '../../components/studio/SetupStage';
 import { IntakeStage } from '../../components/studio/IntakeStage';
@@ -7,8 +10,6 @@ import { BriefStage } from '../../components/studio/BriefStage';
 import { GenerateStage } from '../../components/studio/GenerateStage';
 import { ReviewStage } from '../../components/studio/ReviewStage';
 import { PublishStage } from '../../components/studio/PublishStage';
-
-const API_BASE = '/api/v1/studio';
 
 const STATUS_TO_STAGE: Record<string, number> = {
   draft: 0,
@@ -20,27 +21,10 @@ const STATUS_TO_STAGE: Record<string, number> = {
   published: 6,
 };
 
-function getAuthHeaders(hasBody: boolean): HeadersInit {
-  const token = localStorage.getItem('access_token');
-  return {
-    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
-async function apiFetch(path: string, options: RequestInit = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: { ...getAuthHeaders(!!options.body), ...options.headers },
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || `API error ${res.status}`);
-  return data;
-}
-
 type Track = Record<string, unknown>;
 
 export default function CurriculumStudio() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
@@ -53,7 +37,7 @@ export default function CurriculumStudio() {
 
   const fetchTracks = useCallback(async () => {
     try {
-      const data = await apiFetch('/tracks');
+      const data = await api.get<{ data: Track[] }>('/studio/tracks');
       setTracks(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load tracks');
@@ -63,7 +47,7 @@ export default function CurriculumStudio() {
   const fetchTrack = useCallback(async (trackId: string) => {
     try {
       setLoading(true);
-      const data = await apiFetch(`/tracks/${trackId}`);
+      const data = await api.get<Track>(`/studio/tracks/${trackId}`);
       setTrack(data);
       const status = (data.status as string) || 'draft';
       setActiveStage(STATUS_TO_STAGE[status] ?? 0);
@@ -75,8 +59,8 @@ export default function CurriculumStudio() {
   }, []);
 
   useEffect(() => {
-    fetchTracks();
-  }, [fetchTracks]);
+    if (isAuthenticated) fetchTracks();
+  }, [fetchTracks, isAuthenticated]);
 
   useEffect(() => {
     if (selectedTrackId) {
@@ -90,12 +74,9 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiFetch('/tracks', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      const result = await api.post<{ data: Track }>('/studio/tracks', data);
       const newTrack = result.data;
-      setSelectedTrackId(newTrack.id);
+      setSelectedTrackId(newTrack.id as string);
       setView('editor');
       fetchTracks();
     } catch (err) {
@@ -110,10 +91,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/setup`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
+      await api.put(`/studio/tracks/${selectedTrackId}/setup`, data);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update setup');
@@ -127,10 +105,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/intake`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      await api.post(`/studio/tracks/${selectedTrackId}/intake`, data);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit intake');
@@ -144,7 +119,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/decompose`, { method: 'POST' });
+      await api.post(`/studio/tracks/${selectedTrackId}/decompose`);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to decompose');
@@ -158,10 +133,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/spine`, {
-        method: 'PUT',
-        body: JSON.stringify({ spine }),
-      });
+      await api.put(`/studio/tracks/${selectedTrackId}/spine`, { spine });
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update spine');
@@ -175,10 +147,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/brief`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      await api.post(`/studio/tracks/${selectedTrackId}/brief`, data);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit brief');
@@ -192,7 +161,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/generate`, { method: 'POST' });
+      await api.post(`/studio/tracks/${selectedTrackId}/generate`);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate');
@@ -206,7 +175,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/review`, { method: 'POST' });
+      await api.post(`/studio/tracks/${selectedTrackId}/review`);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start review');
@@ -220,10 +189,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/review/complete`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      await api.post(`/studio/tracks/${selectedTrackId}/review/complete`, data);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to complete review');
@@ -237,7 +203,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/publish`, { method: 'POST' });
+      await api.post(`/studio/tracks/${selectedTrackId}/publish`);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to publish');
@@ -251,7 +217,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${selectedTrackId}/unpublish`, { method: 'POST' });
+      await api.post(`/studio/tracks/${selectedTrackId}/unpublish`);
       fetchTrack(selectedTrackId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to unpublish');
@@ -264,7 +230,7 @@ export default function CurriculumStudio() {
     try {
       setLoading(true);
       setError(null);
-      await apiFetch(`/tracks/${trackId}`, { method: 'DELETE' });
+      await api.delete(`/studio/tracks/${trackId}`);
       if (selectedTrackId === trackId) {
         setSelectedTrackId(null);
         setTrack(null);
@@ -277,6 +243,31 @@ export default function CurriculumStudio() {
       setLoading(false);
     }
   };
+
+  // ── Auth gate ─────────────────────────────────────────────────────────
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Curriculum Studio</h2>
+        <p className="text-gray-500 mb-6">Sign in with an author account to access the authoring pipeline.</p>
+        <Link
+          to="/login?redirect=/studio"
+          className="inline-block px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
+        >
+          Sign In
+        </Link>
+      </div>
+    );
+  }
 
   // ── Track list view ───────────────────────────────────────────────────
 
