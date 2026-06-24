@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { CSVUpload } from './CSVUpload';
-import { ReportExport } from './ReportExport';
 import { api } from '../../lib/api/client';
 import { useAuth } from '../../lib/auth/useAuth';
 
@@ -149,7 +148,6 @@ export function AdminDashboardView() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [showCSVUpload, setShowCSVUpload] = useState(false);
-  const [showReportExport, setShowReportExport] = useState(false);
 
   // Compliance and top performers state (admin-only)
   const [complianceData, setComplianceData] = useState<ComplianceRequirement[]>([]);
@@ -267,13 +265,6 @@ export function AdminDashboardView() {
             className="rounded-lg px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
             Upload CSV
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowReportExport(true)}
-            className="rounded-lg px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Export Report
           </button>
         </div>
       </div>
@@ -557,13 +548,6 @@ export function AdminDashboardView() {
         />
       )}
 
-      {/* Report Export modal */}
-      {showReportExport && (
-        <ReportExport
-          onClose={() => setShowReportExport(false)}
-          orgId="default"
-        />
-      )}
     </section>
   );
 }

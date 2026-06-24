@@ -78,10 +78,7 @@ export function LoginForm() {
         {isSubmitting ? 'Signing in…' : 'Sign in'}
       </button>
 
-      <div className="flex items-center justify-between text-sm">
-        <Link to="/forgot-password" className="text-blue-600 hover:underline">
-          Forgot password?
-        </Link>
+      <div className="flex items-center justify-end text-sm">
         <Link to={redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'} className="text-blue-600 hover:underline">
           Create account
         </Link>

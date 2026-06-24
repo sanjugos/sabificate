@@ -16,7 +16,6 @@ export function CredentialDetail({ credential, onBack }: CredentialDetailProps) 
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: select the URL text
       const input = document.createElement('input');
       input.value = credential.verification_url;
       document.body.appendChild(input);
@@ -27,71 +26,6 @@ export function CredentialDetail({ credential, onBack }: CredentialDetailProps) 
       setTimeout(() => setCopied(false), 2000);
     }
   }, [credential.verification_url]);
-
-  const handleDownload = useCallback(() => {
-    // Find the QR code SVG and convert to downloadable image
-    const svgEl = document.querySelector('[data-qr-svg]') as SVGElement | null;
-    if (!svgEl) return;
-
-    const svgData = new XMLSerializer().serializeToString(svgEl);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const img = new Image();
-    img.onload = () => {
-      canvas.width = 600;
-      canvas.height = 800;
-
-      // White background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 600, 800);
-
-      // Title
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 24px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('SABIficate Certificate', 300, 50);
-
-      // Course title
-      ctx.font = '18px system-ui, sans-serif';
-      ctx.fillText(credential.course_title, 300, 90);
-
-      // Certificate number
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '14px monospace';
-      ctx.fillText(credential.certificate_number, 300, 120);
-
-      // QR code
-      ctx.drawImage(img, 150, 160, 300, 300);
-
-      // Issue date
-      ctx.fillStyle = '#374151';
-      ctx.font = '14px system-ui, sans-serif';
-      ctx.fillText(
-        `Issued: ${new Date(credential.issued_at).toLocaleDateString('en-NG', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}`,
-        300,
-        500,
-      );
-
-      // Verification URL
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText(credential.verification_url, 300, 530);
-
-      // Download
-      const link = document.createElement('a');
-      link.download = `SABIficate-${credential.certificate_number}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    };
-
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-  }, [credential]);
 
   const statusStyle = {
     active: 'bg-green-100 text-green-800',
@@ -227,11 +161,11 @@ export function CredentialDetail({ credential, onBack }: CredentialDetailProps) 
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+        <div className="border-t border-gray-100 bg-gray-50 px-6 py-4">
           <button
             type="button"
             onClick={handleShare}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path
@@ -240,21 +174,7 @@ export function CredentialDetail({ credential, onBack }: CredentialDetailProps) 
                 d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935-2.186 2.25 2.25 0 0 0-3.935 2.186Zm0-12.814a2.25 2.25 0 1 0 3.935-2.186 2.25 2.25 0 0 0-3.935 2.186Z"
               />
             </svg>
-            {copied ? 'Link copied!' : 'Share'}
-          </button>
-          <button
-            type="button"
-            onClick={handleDownload}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-              />
-            </svg>
-            Download
+            {copied ? 'Link copied!' : 'Share verification link'}
           </button>
         </div>
       </div>
