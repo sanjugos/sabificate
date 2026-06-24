@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-24T13:10:20.295Z",
+  "timestamp": "2026-06-24T13:33:27.372Z",
   "total": 70,
   "passed": 70,
   "failed": 0,
@@ -214,7 +214,7 @@
     {
       "name": "CAT-12: Duplicate concept_id rejected",
       "pass": true,
-      "detail": "Error: 500: ERROR: insert into \"concept_catalog\" (concept_id, name, domain, prerequisites, spine_position, id, created_at, updated_at) values ($1, $2, $3, $4, $5, $6, $7, $8) returning \"concept_id\" - duplicate key value violates unique constraint \"concept_catalog_pkey\"\nDETAIL: Key (concept_id)=(aml-fundamentals-001) already exists.\n\n🐜 This seems to be an execution error, which means that your request syntax seems okay,\n    but the resulting statement cannot be executed → Probably not a pg-mem error.\n\n*️⃣ Failed SQL statement: INSERT INTO concept_catalog (concept_id, name, domain, prerequisites, spine_position)\n         VALUES ('aml-fundamentals-001', 'Duplicate', 'test', '[]', null)\n         RETURNING *;\n\n👉 You can file an issue at https://github.com/oguimbal/pg-mem along with a way to reproduce this error (if you can), and  the stacktrace:\n\n"
+      "detail": "Error: 500: duplicate key value violates unique constraint \"concept_catalog_concept_id_key\""
     },
     {
       "name": "EDGE-01: Create edge case track",
@@ -251,7 +251,7 @@
     {
       "name": "EDGE-09: Empty spine handled",
       "pass": true,
-      "detail": "Error: Expected 400, got 200: {\"status\":\"success\",\"data\":{\"name\":\"Edge Case Track\",\"vertical\":\"professional-development\",\"customer_tier\":\"freemium\",\"tier_treatment\":\"A\",\"credential_type\":\"completion_badge\",\"paywall_lesson_index\":2,\"status\":\"decomposition\",\"created_by\":\"55c0a406-53b0-47a6-9a42-51879ba638c9\",\"id\":\"8791f1ea-35ea-4746-87fa-ce3c12e523d2\",\"skill_statement\":\"Test skill\",\"spine\":[],\"gateway_personas\":\"[]\",\"created_at\":\"2026-06-24T13:09:19.944Z\",\"updated_at\":\"2026-06-24T13:09:19.999Z\",\"target_learner_role\":\"Tester\",\"context_mode\":\"generic\",\"things_to_avoid\":null,\"decomposition_meta\":{\"ai_model_used\":\"mock-v1\",\"decomposed_at\":\"2026-06-24T13:09:19.987Z\",\"original_spine_count\":4,\"catalog_matches_found\":0},\"brief_meta\":\"{}\",\"generation_meta\":\"{}\",\"published_course_id\":null,\"published_at\":null}}"
+      "detail": "Error: Expected 400, got 200: {\"status\":\"success\",\"data\":{\"id\":\"3a46ed03-ef49-4c13-8911-6ab432e84e65\",\"name\":\"Edge Case Track\",\"vertical\":\"professional-development\",\"customer_tier\":\"freemium\",\"tier_treatment\":\"A\",\"credential_type\":\"completion_badge\",\"status\":\"decomposition\",\"skill_statement\":\"Test skill\",\"spine\":[],\"gateway_personas\":[],\"created_by\":\"dd219a2d-79c5-4d53-86ca-63d3830535a1\",\"created_at\":\"2026-06-24T13:32:35.115Z\",\"updated_at\":\"2026-06-24T13:32:35.147Z\",\"target_learner_role\":\"Tester\",\"context_mode\":\"generic\",\"things_to_avoid\":null,\"paywall_lesson_index\":2,\"decomposition_meta\":{\"ai_model_used\":\"mock-v1\",\"decomposed_at\":\"2026-06-24T13:32:35.139Z\",\"original_spine_count\":4,\"catalog_matches_found\":0},\"brief_meta\":{},\"generation_meta\":{},\"published_course_id\":null,\"published_at\":null}}"
     },
     {
       "name": "EDGE-10: Delete rejected for decomposition status track",

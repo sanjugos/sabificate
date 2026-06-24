@@ -2,7 +2,7 @@ import { Queue, Worker } from 'bullmq';
 import type { Processor } from 'bullmq';
 import { QUEUE_NAMES } from '../../contracts/shared/events.js';
 
-const useInMemory = process.env.DEV_INMEMORY === 'true';
+const useInMemory = process.env.DEV_INMEMORY === 'true' || !process.env.REDIS_URL;
 
 type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
 

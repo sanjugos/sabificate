@@ -1,7 +1,7 @@
 import { query } from '../db/index.js';
 import { TABLES } from '../db/schema.js';
 
-const useInMemory = process.env.DEV_INMEMORY === 'true';
+const hasRedis = !!process.env.REDIS_URL;
 
 // ── Redis client (real or mock) ────────────────────────────────────────────
 
@@ -13,13 +13,12 @@ interface RedisLike {
 
 let redis: RedisLike;
 
-if (useInMemory) {
+if (hasRedis) {
+  const { default: Redis } = await import('ioredis');
+  redis = new Redis(process.env.REDIS_URL!) as unknown as RedisLike;
+} else {
   const { createMockRedis } = await import('../dev/redis-mock.js');
   redis = createMockRedis();
-  console.log('[dev/conversationState] Using in-memory Redis mock');
-} else {
-  const { default: Redis } = await import('ioredis');
-  redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379') as unknown as RedisLike;
 }
 
 const TTL_SECONDS = 24 * 60 * 60; // 24-hour TTL per conversation

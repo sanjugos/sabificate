@@ -1142,8 +1142,8 @@ export async function seed(): Promise<void> {
   for (const plan of plans) {
     const planResult = await query(
       `INSERT INTO subscription_plans (name, type, price_ngn, billing_cycle, features)
-       SELECT $1, $2, $3::integer, $4, $5::jsonb
-       WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE name = $1)`,
+       SELECT $1::varchar, $2::varchar, $3::integer, $4::varchar, $5::jsonb
+       WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE name = $1::varchar)`,
       [plan.name, plan.type, plan.price_ngn, plan.billing_cycle, plan.features],
     );
     if (planResult.rowCount && planResult.rowCount > 0) {
@@ -1202,9 +1202,9 @@ export async function seed(): Promise<void> {
   for (const mod of moduleData) {
     const modResult = await query(
       `INSERT INTO modules (course_id, title, sort_order)
-       SELECT $1, $2, $3::integer
+       SELECT $1::uuid, $2::varchar, $3::integer
        WHERE NOT EXISTS (
-         SELECT 1 FROM modules WHERE course_id = $1 AND title = $2
+         SELECT 1 FROM modules WHERE course_id = $1::uuid AND title = $2::varchar
        )
        RETURNING id`,
       [courseId, mod.title, mod.sort_order],
@@ -1277,9 +1277,9 @@ export async function seed(): Promise<void> {
   for (const lesson of lessonData) {
     const lessonResult = await query(
       `INSERT INTO lessons (module_id, course_id, title, sort_order, estimated_duration_minutes, content_foundational, content_working, content_applied, has_quiz, is_free, is_published)
-       SELECT $1, $2, $3, $4::integer, $5::integer, $6::jsonb, $7::jsonb, $8::jsonb, true, $9, true
+       SELECT $1::uuid, $2::uuid, $3::varchar, $4::integer, $5::integer, $6::jsonb, $7::jsonb, $8::jsonb, true, $9::boolean, true
        WHERE NOT EXISTS (
-         SELECT 1 FROM lessons WHERE course_id = $2 AND module_id = $1 AND title = $3
+         SELECT 1 FROM lessons WHERE course_id = $2::uuid AND module_id = $1::uuid AND title = $3::varchar
        )`,
       [
         lesson.module_id,
@@ -1326,9 +1326,9 @@ export async function seed(): Promise<void> {
     const ctResult = await query(
       `INSERT INTO credential_templates
          (course_id, name, description, credential_tier, minimum_score, price_ngn, cpd_eligible)
-       SELECT $1, $2, $3, $4, $5::smallint, $6::integer, $7::boolean
+       SELECT $1::uuid, $2::varchar, $3::text, $4::varchar, $5::smallint, $6::integer, $7::boolean
        WHERE NOT EXISTS (
-         SELECT 1 FROM credential_templates WHERE course_id = $1 AND credential_tier = $4
+         SELECT 1 FROM credential_templates WHERE course_id = $1::uuid AND credential_tier = $4::varchar
        )`,
       [courseId, ct.name, ct.description, ct.credential_tier, ct.minimum_score, ct.price_ngn, ct.cpd_eligible],
     );
@@ -1396,9 +1396,9 @@ export async function seed(): Promise<void> {
   for (const deptName of departmentNames) {
     const deptResult = await query(
       `INSERT INTO departments (org_id, name)
-       SELECT $1, $2
+       SELECT $1::uuid, $2::varchar
        WHERE NOT EXISTS (
-         SELECT 1 FROM departments WHERE org_id = $1 AND name = $2
+         SELECT 1 FROM departments WHERE org_id = $1::uuid AND name = $2::varchar
        )
        RETURNING id`,
       [orgId, deptName],
@@ -1422,9 +1422,9 @@ export async function seed(): Promise<void> {
 
   const compReqResult = await query(
     `INSERT INTO course_compliance_requirements (org_id, course_id, regulatory_body, compliance_deadline, is_mandatory)
-     SELECT $1, $2, $3, $4::date, true
+     SELECT $1::uuid, $2::uuid, $3::varchar, $4::date, true
      WHERE NOT EXISTS (
-       SELECT 1 FROM course_compliance_requirements WHERE org_id = $1 AND course_id = $2 AND regulatory_body = $3
+       SELECT 1 FROM course_compliance_requirements WHERE org_id = $1::uuid AND course_id = $2::uuid AND regulatory_body = $3::varchar
      )`,
     [orgId, courseId, 'CBN', deadlineStr],
   );
@@ -1460,9 +1460,9 @@ export async function seed(): Promise<void> {
   for (const consentType of consentTypes) {
     const consentResult = await query(
       `INSERT INTO consent_records (user_id, consent_type, granted, version)
-       SELECT $1, $2, true, '1.0'
+       SELECT $1::uuid, $2::varchar, true, '1.0'
        WHERE NOT EXISTS (
-         SELECT 1 FROM consent_records WHERE user_id = $1 AND consent_type = $2
+         SELECT 1 FROM consent_records WHERE user_id = $1::uuid AND consent_type = $2::varchar
        )`,
       [demoUserId, consentType],
     );
@@ -1556,9 +1556,9 @@ export async function seed(): Promise<void> {
     // Insert calibration question for this persona
     const calResult = await query(
       `INSERT INTO calibration_questions (persona_id, question_text, options, proficiency_map, sort_order)
-       SELECT $1, $2, $3::jsonb, $4::jsonb, 0
+       SELECT $1::uuid, $2::text, $3::jsonb, $4::jsonb, 0
        WHERE NOT EXISTS (
-         SELECT 1 FROM calibration_questions WHERE persona_id = $1 AND question_text = $2
+         SELECT 1 FROM calibration_questions WHERE persona_id = $1::uuid AND question_text = $2::text
        )`,
       [personaId, p.calibration.question_text, p.calibration.options, p.calibration.proficiency_map],
     );

@@ -5,7 +5,7 @@ import { TABLES } from '../db/schema.js';
 import { deliverLesson } from './lessonDelivery.js';
 import { hasWhatsAppConsent } from './conversationState.js';
 
-const useInMemory = process.env.DEV_INMEMORY === 'true';
+const useInMemory = process.env.DEV_INMEMORY === 'true' || !process.env.REDIS_URL;
 
 // ── Constants ───────────────────────────────────────────────────────────────
 

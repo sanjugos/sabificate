@@ -369,9 +369,9 @@ export async function seedCourses(): Promise<void> {
     for (const mod of course.modules) {
       const modResult = await query(
         `INSERT INTO modules (course_id, title, sort_order)
-         SELECT $1, $2, $3::integer
+         SELECT $1::uuid, $2::varchar, $3::integer
          WHERE NOT EXISTS (
-           SELECT 1 FROM modules WHERE course_id = $1 AND title = $2
+           SELECT 1 FROM modules WHERE course_id = $1::uuid AND title = $2::varchar
          )
          RETURNING id`,
         [courseId, mod.title, mod.sort_order],
@@ -398,11 +398,11 @@ export async function seedCourses(): Promise<void> {
           `INSERT INTO lessons (module_id, course_id, title, sort_order,
             estimated_duration_minutes, content_foundational, content_working,
             content_applied, has_quiz, is_free, is_published)
-           SELECT $1, $2, $3, $4::integer, $5::integer,
+           SELECT $1::uuid, $2::uuid, $3::varchar, $4::integer, $5::integer,
              $6::jsonb, $6::jsonb, $6::jsonb,
-             $7, $8, true
+             $7::boolean, $8::boolean, true
            WHERE NOT EXISTS (
-             SELECT 1 FROM lessons WHERE course_id = $2 AND module_id = $1 AND title = $3
+             SELECT 1 FROM lessons WHERE course_id = $2::uuid AND module_id = $1::uuid AND title = $3::varchar
            )`,
           [
             moduleId,

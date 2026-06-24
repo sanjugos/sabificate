@@ -1,110 +1,8 @@
 -- SABIficate Database Schema
--- Split architecture: App tables on Hetzner, PII tables flagged for Nigerian host
+-- Reordered for real PostgreSQL: tables created before their REFERENCES targets
 
 -- ============================================================
--- PII TABLES (Nigerian host: Layer3Cloud Lagos or MainOne)
--- ============================================================
-
--- NDPA: PII TABLE - Nigerian host
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone_number VARCHAR(20),
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    avatar_url TEXT,
-    role VARCHAR(20) NOT NULL DEFAULT 'learner' CHECK (role IN ('learner', 'department_admin', 'corporate_admin', 'platform_admin')),
-    org_id UUID REFERENCES organizations(id),
-    department_id UUID REFERENCES departments(id),
-    language_preference VARCHAR(5) DEFAULT 'en',
-    data_saver_mode VARCHAR(20) DEFAULT 'data_saver' CHECK (data_saver_mode IN ('full', 'data_saver', 'ultra_light')),
-    consent_education_only BOOLEAN NOT NULL DEFAULT true,
-    consent_anonymized_aggregate BOOLEAN NOT NULL DEFAULT false,
-    consent_full_profile BOOLEAN NOT NULL DEFAULT false,
-    consent_whatsapp_notifications BOOLEAN NOT NULL DEFAULT false,
-    consent_sms_notifications BOOLEAN NOT NULL DEFAULT false,
-    consent_updated_at TIMESTAMPTZ,
-    email_verified BOOLEAN DEFAULT false,
-    persona_slug VARCHAR(50),
-    proficiency_level VARCHAR(20) DEFAULT 'foundational' CHECK (proficiency_level IN ('foundational', 'working', 'applied')),
-    customer_tier VARCHAR(20) DEFAULT 'freemium' CHECK (customer_tier IN ('freemium', 'hiring', 'upskilling', 'premium')),
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- NDPA: PII TABLE - Nigerian host
-CREATE TABLE learner_progress (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    lesson_id UUID NOT NULL REFERENCES lessons(id),
-    course_id UUID NOT NULL REFERENCES courses(id),
-    status VARCHAR(20) NOT NULL DEFAULT 'not_started' CHECK (status IN ('not_started', 'in_progress', 'completed')),
-    progress_percent SMALLINT NOT NULL DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100),
-    time_spent_seconds INTEGER NOT NULL DEFAULT 0,
-    difficulty_tier VARCHAR(20) NOT NULL DEFAULT 'foundational',
-    last_block_index INTEGER DEFAULT 0,
-    completed_at TIMESTAMPTZ,
-    client_id VARCHAR(64),
-    synced_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(user_id, lesson_id)
-);
-
--- NDPA: PII TABLE - Nigerian host
-CREATE TABLE assessment_attempts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    lesson_id UUID NOT NULL REFERENCES lessons(id),
-    quiz_block_id VARCHAR(100) NOT NULL,
-    selected_option INTEGER NOT NULL,
-    is_correct BOOLEAN NOT NULL,
-    answered_at TIMESTAMPTZ NOT NULL,
-    difficulty_tier VARCHAR(20) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- NDPA: PII TABLE - Nigerian host
-CREATE TABLE consent_records (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    consent_type VARCHAR(50) NOT NULL,
-    granted BOOLEAN NOT NULL,
-    version VARCHAR(10) NOT NULL DEFAULT '1.0',
-    ip_address TEXT,
-    user_agent TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_consent_records_user ON consent_records(user_id);
-
--- NDPA: PII TABLE - Nigerian host
-CREATE TABLE learner_artifacts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    lesson_id UUID NOT NULL REFERENCES lessons(id),
-    block_id VARCHAR(100) NOT NULL,
-    response_text TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(user_id, lesson_id, block_id)
-);
-
--- NDPA: PII TABLE - Nigerian host
-CREATE TABLE learner_scenario_decisions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    lesson_id UUID NOT NULL REFERENCES lessons(id),
-    block_id VARCHAR(100) NOT NULL,
-    decisions JSONB NOT NULL DEFAULT '[]',
-    completed BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(user_id, lesson_id, block_id)
-);
-
--- ============================================================
--- APPLICATION TABLES (Hetzner Nuremberg)
+-- INDEPENDENT TABLES (no foreign key dependencies)
 -- ============================================================
 
 CREATE TABLE organizations (
@@ -134,6 +32,19 @@ CREATE TABLE course_categories (
     name VARCHAR(100) NOT NULL,
     slug VARCHAR(100) UNIQUE NOT NULL,
     sort_order INTEGER DEFAULT 0
+);
+
+CREATE TABLE subscription_plans (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('individual', 'corporate')),
+    price_ngn INTEGER NOT NULL,
+    billing_cycle VARCHAR(20) NOT NULL CHECK (billing_cycle IN ('monthly', 'quarterly', 'annual')),
+    features JSONB DEFAULT '[]',
+    max_courses INTEGER,
+    paystack_plan_code VARCHAR(100),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE courses (
@@ -185,6 +96,168 @@ CREATE TABLE lessons (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE personas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    vertical VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    label VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    icon_svg TEXT,
+    default_proficiency VARCHAR(20) NOT NULL DEFAULT 'foundational' CHECK (default_proficiency IN ('foundational', 'working', 'applied')),
+    default_customer_tier VARCHAR(20) NOT NULL DEFAULT 'freemium' CHECK (default_customer_tier IN ('freemium', 'hiring', 'upskilling', 'premium')),
+    example_skin JSONB DEFAULT '{}',
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE calibration_questions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    persona_id UUID NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
+    question_text TEXT NOT NULL,
+    options JSONB NOT NULL,
+    proficiency_map JSONB NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE whatsapp_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) UNIQUE NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    language VARCHAR(10) DEFAULT 'en',
+    body_template TEXT NOT NULL,
+    button_config JSONB,
+    meta_status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE concept_catalog (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    concept_id VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    domain VARCHAR(100) NOT NULL,
+    prerequisites JSONB DEFAULT '[]',
+    spine_position INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE prompt_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    stage VARCHAR(50) NOT NULL,
+    bloom_level VARCHAR(20),
+    tier VARCHAR(20),
+    template_text TEXT NOT NULL,
+    version INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- USER TABLE (depends on organizations, departments)
+-- ============================================================
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone_number VARCHAR(20),
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    avatar_url TEXT,
+    role VARCHAR(20) NOT NULL DEFAULT 'learner' CHECK (role IN ('learner', 'department_admin', 'corporate_admin', 'platform_admin')),
+    org_id UUID REFERENCES organizations(id),
+    department_id UUID REFERENCES departments(id),
+    language_preference VARCHAR(5) DEFAULT 'en',
+    data_saver_mode VARCHAR(20) DEFAULT 'data_saver' CHECK (data_saver_mode IN ('full', 'data_saver', 'ultra_light')),
+    consent_education_only BOOLEAN NOT NULL DEFAULT true,
+    consent_anonymized_aggregate BOOLEAN NOT NULL DEFAULT false,
+    consent_full_profile BOOLEAN NOT NULL DEFAULT false,
+    consent_whatsapp_notifications BOOLEAN NOT NULL DEFAULT false,
+    consent_sms_notifications BOOLEAN NOT NULL DEFAULT false,
+    consent_updated_at TIMESTAMPTZ,
+    email_verified BOOLEAN DEFAULT false,
+    persona_slug VARCHAR(50),
+    proficiency_level VARCHAR(20) DEFAULT 'foundational' CHECK (proficiency_level IN ('foundational', 'working', 'applied')),
+    customer_tier VARCHAR(20) DEFAULT 'freemium' CHECK (customer_tier IN ('freemium', 'hiring', 'upskilling', 'premium')),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- PII + LEARNER TABLES (depend on users, lessons, courses)
+-- ============================================================
+
+CREATE TABLE learner_progress (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    lesson_id UUID NOT NULL REFERENCES lessons(id),
+    course_id UUID NOT NULL REFERENCES courses(id),
+    status VARCHAR(20) NOT NULL DEFAULT 'not_started' CHECK (status IN ('not_started', 'in_progress', 'completed')),
+    progress_percent SMALLINT NOT NULL DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100),
+    time_spent_seconds INTEGER NOT NULL DEFAULT 0,
+    difficulty_tier VARCHAR(20) NOT NULL DEFAULT 'foundational',
+    last_block_index INTEGER DEFAULT 0,
+    completed_at TIMESTAMPTZ,
+    client_id VARCHAR(64),
+    synced_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, lesson_id)
+);
+
+CREATE TABLE assessment_attempts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    lesson_id UUID NOT NULL REFERENCES lessons(id),
+    quiz_block_id VARCHAR(100) NOT NULL,
+    selected_option INTEGER NOT NULL,
+    is_correct BOOLEAN NOT NULL,
+    answered_at TIMESTAMPTZ NOT NULL,
+    difficulty_tier VARCHAR(20) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE consent_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    consent_type VARCHAR(50) NOT NULL,
+    granted BOOLEAN NOT NULL,
+    version VARCHAR(10) NOT NULL DEFAULT '1.0',
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_consent_records_user ON consent_records(user_id);
+
+CREATE TABLE learner_artifacts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    lesson_id UUID NOT NULL REFERENCES lessons(id),
+    block_id VARCHAR(100) NOT NULL,
+    response_text TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, lesson_id, block_id)
+);
+
+CREATE TABLE learner_scenario_decisions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    lesson_id UUID NOT NULL REFERENCES lessons(id),
+    block_id VARCHAR(100) NOT NULL,
+    decisions JSONB NOT NULL DEFAULT '[]',
+    completed BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, lesson_id, block_id)
+);
+
+-- ============================================================
+-- ENROLLMENT, PAYMENT, SUBSCRIPTION (depend on users, orgs, plans, courses)
+-- ============================================================
+
 CREATE TABLE enrollment (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
@@ -195,20 +268,6 @@ CREATE TABLE enrollment (
     enrolled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMPTZ,
     UNIQUE(user_id, course_id)
-);
-
--- Subscription and Payment tables
-CREATE TABLE subscription_plans (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('individual', 'corporate')),
-    price_ngn INTEGER NOT NULL,
-    billing_cycle VARCHAR(20) NOT NULL CHECK (billing_cycle IN ('monthly', 'quarterly', 'annual')),
-    features JSONB DEFAULT '[]',
-    max_courses INTEGER,
-    paystack_plan_code VARCHAR(100),
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE subscriptions (
@@ -272,7 +331,10 @@ CREATE TABLE dunning_attempts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Credential tables
+-- ============================================================
+-- CREDENTIALS (depend on courses, users, orgs)
+-- ============================================================
+
 CREATE TABLE credential_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id UUID NOT NULL REFERENCES courses(id),
@@ -310,7 +372,10 @@ CREATE TABLE issued_credentials (
     revoked_at TIMESTAMPTZ
 );
 
--- Seat allocation tables
+-- ============================================================
+-- SEATS, WHATSAPP, BULK ENROLLMENT
+-- ============================================================
+
 CREATE TABLE seat_allocations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations(id),
@@ -329,7 +394,6 @@ CREATE TABLE department_seat_allocations (
     used_seats INTEGER NOT NULL DEFAULT 0
 );
 
--- WhatsApp tables
 CREATE TABLE whatsapp_subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
@@ -352,18 +416,6 @@ CREATE TABLE whatsapp_messages (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE whatsapp_templates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) UNIQUE NOT NULL,
-    category VARCHAR(50) NOT NULL,
-    language VARCHAR(10) DEFAULT 'en',
-    body_template TEXT NOT NULL,
-    button_config JSONB,
-    meta_status VARCHAR(20) DEFAULT 'pending',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Bulk enrollment tables
 CREATE TABLE bulk_enrollment_jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations(id),
@@ -386,43 +438,9 @@ CREATE TABLE bulk_enrollment_errors (
     error_message TEXT NOT NULL
 );
 
--- Persona gateway tables
-CREATE TABLE personas (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    vertical VARCHAR(100) NOT NULL,
-    slug VARCHAR(100) UNIQUE NOT NULL,
-    label VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    icon_svg TEXT,
-    default_proficiency VARCHAR(20) NOT NULL DEFAULT 'foundational' CHECK (default_proficiency IN ('foundational', 'working', 'applied')),
-    default_customer_tier VARCHAR(20) NOT NULL DEFAULT 'freemium' CHECK (default_customer_tier IN ('freemium', 'hiring', 'upskilling', 'premium')),
-    example_skin JSONB DEFAULT '{}',
-    sort_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE calibration_questions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    persona_id UUID NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
-    question_text TEXT NOT NULL,
-    options JSONB NOT NULL,
-    proficiency_map JSONB NOT NULL,
-    sort_order INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Curriculum authoring tables
-CREATE TABLE concept_catalog (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    concept_id VARCHAR(100) UNIQUE NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    domain VARCHAR(100) NOT NULL,
-    prerequisites JSONB DEFAULT '[]',
-    spine_position INTEGER,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- ============================================================
+-- AUTHORING, USER PERSONAS, CPD, COMPLIANCE, REVIEWS
+-- ============================================================
 
 CREATE TABLE authoring_tracks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -440,7 +458,6 @@ CREATE TABLE authoring_tracks (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- User personas (onboarding gateway results)
 CREATE TABLE user_personas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL UNIQUE REFERENCES users(id),
@@ -455,7 +472,6 @@ CREATE TABLE user_personas (
     synced_at TIMESTAMPTZ
 );
 
--- CPD credit tracking
 CREATE TABLE cpd_credit_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
@@ -467,7 +483,6 @@ CREATE TABLE cpd_credit_log (
     logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Compliance requirements for B2B
 CREATE TABLE course_compliance_requirements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations(id),
@@ -478,7 +493,6 @@ CREATE TABLE course_compliance_requirements (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Credential purchases (pay-per-cert)
 CREATE TABLE credential_purchases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
@@ -489,7 +503,6 @@ CREATE TABLE credential_purchases (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- SME review actions
 CREATE TABLE review_actions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lesson_id UUID NOT NULL REFERENCES lessons(id),
@@ -500,19 +513,10 @@ CREATE TABLE review_actions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Prompt template registry for content pipeline
-CREATE TABLE prompt_templates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    stage VARCHAR(50) NOT NULL,
-    bloom_level VARCHAR(20),
-    tier VARCHAR(20),
-    template_text TEXT NOT NULL,
-    version INTEGER DEFAULT 1,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- ============================================================
+-- INDEXES
+-- ============================================================
 
--- Indexes
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_org ON users(org_id);
 CREATE INDEX idx_learner_progress_user ON learner_progress(user_id);
