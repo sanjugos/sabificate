@@ -8,7 +8,7 @@
     "dev:server": "tsx watch server/api/server.ts",
     "dev:seeded": "tsx scripts/dev-start.ts",
     "dev:full": "concurrently -n vite,server -c cyan,green \"npm run dev\" \"npm run dev:seeded\"",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && NODE_ENV=production vite build",
     "build:server": "tsc --noEmit -p tsconfig.server.json",
     "start": "tsx server/api/server.ts",
     "lint": "eslint .",
