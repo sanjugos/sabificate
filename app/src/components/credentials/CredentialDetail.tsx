@@ -115,6 +115,26 @@ export function CredentialDetail({ credential, onBack }: CredentialDetailProps) 
             </div>
           )}
 
+          {/* Assessment score */}
+          {credential.assessment_score != null && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">Score</span>
+              <span className="text-sm font-medium text-gray-900">
+                {credential.assessment_score}%
+              </span>
+            </div>
+          )}
+
+          {/* CPD hours */}
+          {credential.cpd_hours_awarded != null && credential.cpd_hours_awarded > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">CPD Hours</span>
+              <span className="text-sm font-medium text-gray-900">
+                {credential.cpd_hours_awarded} hours
+              </span>
+            </div>
+          )}
+
           {/* Co-brand signatory */}
           {credential.co_brand_signatory && (
             <div className="flex items-center justify-between">

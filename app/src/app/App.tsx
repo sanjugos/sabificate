@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { DataSaverProvider } from '../lib/pwa/useDataSaverMode';
 import { RequireRole } from '../components/auth/RequireRole';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Onboarding from './pages/Onboarding';
 
 // Lazy-loaded route components — each becomes its own chunk
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -13,9 +16,6 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Credentials = lazy(() => import('./pages/Credentials'));
 const PublicVerify = lazy(() => import('./pages/PublicVerify'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const CurriculumStudio = lazy(() => import('./pages/CurriculumStudio'));
 const ConceptCatalog = lazy(() => import('../components/studio/ConceptCatalog'));
@@ -51,7 +51,7 @@ export default function App() {
               element={<LessonPlayer />}
             />
             <Route path="admin" element={<RequireRole role={['corporate_admin', 'platform_admin']}><AdminDashboard /></RequireRole>} />
-            <Route path="studio" element={<RequireRole role={['corporate_admin', 'platform_admin', 'curriculum_author']}><CurriculumStudio /></RequireRole>} />
+            <Route path="studio" element={<RequireRole role={['curriculum_author', 'platform_admin', 'sme_reviewer', 'corporate_admin']}><CurriculumStudio /></RequireRole>} />
             <Route path="catalog" element={<RequireRole role={['corporate_admin', 'platform_admin', 'curriculum_author']}><ConceptCatalog /></RequireRole>} />
             <Route path="profile" element={<Profile />} />
             <Route path="credentials" element={<Credentials />} />

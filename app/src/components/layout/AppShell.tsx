@@ -14,6 +14,12 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="flex flex-col min-h-svh min-w-[360px]">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:text-blue-700 focus:underline"
+      >
+        Skip to main content
+      </a>
       <TopBar />
       <OfflineIndicator />
       {needsUpdate && (
@@ -27,7 +33,7 @@ export function AppShell({ children }: AppShellProps) {
           </button>
         </div>
       )}
-      <main className="flex-1 pb-16 overflow-y-auto">
+      <main id="main-content" className="flex-1 pb-16 overflow-y-auto">
         {children ?? <Outlet />}
       </main>
       <BottomNav />

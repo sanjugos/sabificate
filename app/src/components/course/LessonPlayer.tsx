@@ -30,6 +30,7 @@ export function LessonPlayer({
   const [cardIndex, setCardIndex] = useState(0);
   const [viewedCards, setViewedCards] = useState<Set<number>>(new Set([0]));
   const [quizAnswers, setQuizAnswers] = useState<Map<string, QuizAnswer>>(new Map());
+  const [completedBlocks, setCompletedBlocks] = useState<Set<number>>(new Set());
   const timeStartRef = useRef<number>(Date.now());
   const touchRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const completeFiredRef = useRef(false);
@@ -40,6 +41,33 @@ export function LessonPlayer({
   const isLastCard = cardIndex === totalCards - 1;
   const isFirstCard = cardIndex === 0;
 
+  // A block is considered completed if it's in the completedBlocks set
+  // OR if it's a text_block that has been viewed (text blocks auto-complete on view).
+  const isBlockCompleted = useCallback((index: number): boolean => {
+    if (completedBlocks.has(index)) return true;
+    // Text blocks are auto-completed once viewed
+    const block = blocks[index];
+    return block?.type === 'text_block' && viewedCards.has(index);
+  }, [completedBlocks, blocks, viewedCards]);
+
+  // Sequential lock: a block is unlocked if all blocks before it are completed
+  // maxUnlockedIndex = first index where the block is not completed, i.e. highest
+  // contiguous completed index + 1
+  const maxUnlockedIndex = (() => {
+    let max = 0;
+    for (let i = 0; i < totalCards; i++) {
+      if (isBlockCompleted(i)) {
+        max = i + 1;
+      } else {
+        break;
+      }
+    }
+    return max;
+  })();
+
+  const isBlockLocked = (index: number): boolean => index > maxUnlockedIndex;
+  const isCurrentBlockCompleted = isBlockCompleted(cardIndex);
+
   const progressPercent = totalCards > 0
     ? Math.round((viewedCards.size / totalCards) * 100)
     : 0;
@@ -49,6 +77,7 @@ export function LessonPlayer({
     setCardIndex(0);
     setViewedCards(new Set([0]));
     setQuizAnswers(new Map());
+    setCompletedBlocks(new Set());
     timeStartRef.current = Date.now();
     completeFiredRef.current = false;
   }, [lesson.id]);
@@ -81,8 +110,8 @@ export function LessonPlayer({
   }, [viewedCards.size, cardIndex, progressPercent, totalCards, lesson.id, onProgressUpdate, onLessonComplete]);
 
   const goNext = useCallback(() => {
-    if (cardIndex < totalCards - 1) setCardIndex((i) => i + 1);
-  }, [cardIndex, totalCards]);
+    if (cardIndex < totalCards - 1 && isCurrentBlockCompleted) setCardIndex((i) => i + 1);
+  }, [cardIndex, totalCards, isCurrentBlockCompleted]);
 
   const goPrev = useCallback(() => {
     if (cardIndex > 0) setCardIndex((i) => i - 1);
@@ -120,9 +149,44 @@ export function LessonPlayer({
         next.set(answer.quiz_block_id, answer);
         return next;
       });
+      // Mark the current block as completed when a quiz is answered
+      setCompletedBlocks((prev) => {
+        if (prev.has(cardIndex)) return prev;
+        const next = new Set(prev);
+        next.add(cardIndex);
+        return next;
+      });
       onQuizSubmit(answer);
     },
-    [onQuizSubmit],
+    [onQuizSubmit, cardIndex],
+  );
+
+  const handleScenarioComplete = useCallback(
+    (blockId: string, decisions: { nodeId: string; choiceLabel: string; feedback: string }[]) => {
+      // Mark the current block as completed when a scenario finishes
+      setCompletedBlocks((prev) => {
+        if (prev.has(cardIndex)) return prev;
+        const next = new Set(prev);
+        next.add(cardIndex);
+        return next;
+      });
+      onScenarioComplete?.(blockId, decisions);
+    },
+    [onScenarioComplete, cardIndex],
+  );
+
+  const handleArtifactSubmit = useCallback(
+    (blockId: string, text: string) => {
+      // Mark the current block as completed when an artifact is submitted
+      setCompletedBlocks((prev) => {
+        if (prev.has(cardIndex)) return prev;
+        const next = new Set(prev);
+        next.add(cardIndex);
+        return next;
+      });
+      onArtifactSubmit?.(blockId, text);
+    },
+    [onArtifactSubmit, cardIndex],
   );
 
   return (
@@ -175,8 +239,8 @@ export function LessonPlayer({
             block={currentBlock}
             dataSaverMode={dataSaverMode}
             onQuizAnswer={handleQuizAnswer}
-            onArtifactSubmit={onArtifactSubmit}
-            onScenarioComplete={onScenarioComplete}
+            onArtifactSubmit={handleArtifactSubmit}
+            onScenarioComplete={handleScenarioComplete}
             previousQuizAnswer={
               currentBlock.type === 'quiz_block'
                 ? quizAnswers.get(currentBlock.id)
@@ -198,21 +262,27 @@ export function LessonPlayer({
         {/* Card dots — only show when <= 15 cards */}
         {totalCards > 0 && totalCards <= 15 && (
           <div className="flex justify-center gap-1.5 pt-3 pb-2 px-4">
-            {blocks.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setCardIndex(i)}
-                className={`h-2 rounded-full transition-all duration-200 ${
-                  i === cardIndex
-                    ? 'bg-[var(--accent)] w-4'
-                    : viewedCards.has(i)
-                      ? 'bg-[var(--accent)] opacity-40 w-2'
-                      : 'bg-[var(--border)] w-2'
-                }`}
-                aria-label={`Go to card ${i + 1}`}
-              />
-            ))}
+            {blocks.map((_, i) => {
+              const locked = isBlockLocked(i);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => { if (!locked) setCardIndex(i); }}
+                  data-locked={locked ? 'true' : undefined}
+                  className={`h-2 rounded-full transition-all duration-200 ${
+                    locked
+                      ? 'bg-[var(--border)] opacity-30 w-2 cursor-not-allowed'
+                      : i === cardIndex
+                        ? 'bg-[var(--accent)] w-4'
+                        : viewedCards.has(i)
+                          ? 'bg-[var(--accent)] opacity-40 w-2'
+                          : 'bg-[var(--border)] w-2'
+                  }`}
+                  aria-label={`Go to card ${i + 1}`}
+                />
+              );
+            })}
           </div>
         )}
 
@@ -248,8 +318,13 @@ export function LessonPlayer({
           ) : (
             <button
               type="button"
+              disabled={!isCurrentBlockCompleted}
               onClick={goNext}
-              className="flex-1 min-h-[44px] rounded-lg bg-[var(--accent)] text-white text-sm font-medium transition-opacity active:opacity-80"
+              className={`flex-1 min-h-[44px] rounded-lg text-white text-sm font-medium transition-opacity ${
+                isCurrentBlockCompleted
+                  ? 'bg-[var(--accent)] active:opacity-80'
+                  : 'bg-[var(--accent)] opacity-40 cursor-not-allowed'
+              }`}
             >
               Next
             </button>

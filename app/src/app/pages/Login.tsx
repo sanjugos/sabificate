@@ -18,6 +18,7 @@ export default function Login() {
           <p className="text-sm text-gray-500 mt-1">Professional Microlearning</p>
         </div>
         <LoginForm />
+        <p className="text-center text-xs text-gray-300 mt-8" data-testid="build-id">build:20260625-v5</p>
       </div>
     </div>
   );

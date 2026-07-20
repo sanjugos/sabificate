@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 
@@ -10,23 +10,50 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const busyRef = useRef(false);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  const doLogin = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+
+    const form = formRef.current;
+    const emailVal = form?.querySelector<HTMLInputElement>('#login-email')?.value || email;
+    const passwordVal = form?.querySelector<HTMLInputElement>('#login-password')?.value || password;
+
     setError(null);
     setIsSubmitting(true);
 
     try {
-      await login({ email, password });
+      await login({ email: emailVal, password: passwordVal });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setIsSubmitting(false);
+      busyRef.current = false;
     }
+  }, [login, email, password]);
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    doLogin();
   }
 
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+
+    function onNativeSubmit(e: Event) {
+      e.preventDefault();
+      doLogin();
+    }
+
+    form.addEventListener('submit', onNativeSubmit);
+    return () => form.removeEventListener('submit', onNativeSubmit);
+  }, [doLogin]);
+
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto space-y-5 px-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="w-full max-w-sm mx-auto space-y-5 px-4">
       <h1 className="text-2xl font-bold text-center text-gray-900">Sign in</h1>
 
       {error && (
@@ -44,6 +71,7 @@ export function LoginForm() {
         </label>
         <input
           id="login-email"
+          name="email"
           type="email"
           required
           autoComplete="email"
@@ -60,6 +88,7 @@ export function LoginForm() {
         </label>
         <input
           id="login-password"
+          name="password"
           type="password"
           required
           autoComplete="current-password"

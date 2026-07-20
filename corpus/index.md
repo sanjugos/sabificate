@@ -22,6 +22,27 @@
 | 10 | **Curriculum Tool Walkthrough** | `curriculum-design/sabi-curriculum-tool-walkthrough.md` | SABI Curriculum Tool decomposition simulation — 7-stage prototype | Complete |
 | 11 | **Learner Mobile Walkthrough** | `curriculum-design/sabi-learner-mobile-walkthrough.md` | SABI Learner Mobile Course — 5-block lesson model in action | Complete |
 
+## Partner Documents (July 2026)
+
+| # | Document | Path | Author | Status |
+|---|----------|------|--------|--------|
+| 12 | **Course Catalogue v1** | `catalog/course-catalogue-v1.md` | Gbitse Barrow | Complete |
+| 13 | **Platform Spec v1** | `docs/platform-spec-v1.md` | Mark Otis | Complete |
+| 14 | **NCCE Partnership Lead** | `partnership/ncce-opportunity.md` | Team meeting 2026-07-08 | Open |
+| 15 | **Team Meeting 2026-07-08** | `meeting-transcript/meeting-2026-07-08.md` | All three partners | Complete |
+
+| 16 | **Codebase Readiness Assessment** | `docs/codebase-readiness-assessment.md` | Engineering audit 2026-07-20 | Complete |
+
+Source documents: `/workspace/SABIFICATE Course Catalogue v1. July 2026.docx` (87 KB), `/workspace/SABIficate_Platform_Development_Spec.docx` (38 KB)
+
+## Build Specs (Praxis v2 — July 2026)
+
+| # | Document | Path | Product | Status |
+|---|----------|------|---------|--------|
+| B1 | **Learner App v1 Spec** | `/workspace/specs/learner-app-v1-spec.md` | Learner App | For Review |
+| B2 | **Curriculum Studio v1 Spec** | `/workspace/specs/curriculum-studio-v1-spec.md` | Curriculum Studio | For Review |
+| B3 | **Praxis Spec Gate** | `/workspace/.specify/` | Both | In Progress |
+
 ## Cross-Container References
 
 These files in other containers are relevant and readable:

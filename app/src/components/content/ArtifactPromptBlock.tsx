@@ -15,8 +15,12 @@ export function ArtifactPromptBlock({
     () => rubric.map(() => false),
   );
 
+  const MIN_CHARS = 50;
+  const charCount = text.length;
+  const meetsMinimum = charCount >= MIN_CHARS;
+
   function handleSubmit() {
-    if (!text.trim() || submitted) return;
+    if (!meetsMinimum || submitted) return;
     setSubmitted(true);
     onSubmit(text);
   }
@@ -88,11 +92,22 @@ export function ArtifactPromptBlock({
         className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-3 text-sm text-[var(--text-h)] placeholder:text-[var(--text)] resize-y focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent-border)] disabled:opacity-50"
       />
 
+      {/* Character count */}
+      {!submitted && (
+        <p
+          className={`mt-1 text-xs text-right ${
+            meetsMinimum ? 'text-green-600' : 'text-[var(--text)]'
+          }`}
+        >
+          {charCount}/{MIN_CHARS}
+        </p>
+      )}
+
       {/* Submit button */}
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={!text.trim() || submitted}
+        disabled={!meetsMinimum || submitted}
         className="mt-3 w-full min-h-[44px] rounded-lg bg-[var(--accent)] text-white text-sm font-medium transition-opacity disabled:opacity-40 active:opacity-80"
       >
         {submitted ? 'Submitted' : 'Submit Artifact'}

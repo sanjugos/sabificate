@@ -29,14 +29,18 @@ export function QuizBlock({
 
   function handleSelect(optionIndex: number) {
     if (answered) return;
-
     setSelectedOption(optionIndex);
+  }
+
+  function handleSubmit() {
+    if (selectedOption === null || answered) return;
+
     setAnswered(true);
 
     const answer: QuizAnswer = {
       quiz_block_id: id,
-      selected_option: optionIndex,
-      is_correct: optionIndex === correct_answer,
+      selected_option: selectedOption,
+      is_correct: selectedOption === correct_answer,
       answered_at: new Date().toISOString(),
     };
 
@@ -48,6 +52,9 @@ export function QuizBlock({
       'w-full min-h-[44px] px-4 py-3 text-left rounded-lg border text-sm transition-colors';
 
     if (!answered) {
+      if (index === selectedOption) {
+        return `${base} border-[var(--accent)] bg-[var(--accent-bg)] ring-1 ring-[var(--accent-border)] cursor-pointer`;
+      }
       return `${base} border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--accent-bg)] active:bg-[var(--accent-bg)] cursor-pointer`;
     }
 
@@ -95,6 +102,18 @@ export function QuizBlock({
           </button>
         ))}
       </div>
+
+      {/* Submit button */}
+      {!answered && (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={selectedOption === null}
+          className="mt-4 w-full min-h-[44px] rounded-lg bg-[var(--accent)] text-white text-sm font-medium transition-opacity disabled:opacity-40 active:opacity-80"
+        >
+          Submit Answer
+        </button>
+      )}
 
       {/* Feedback */}
       {answered && (

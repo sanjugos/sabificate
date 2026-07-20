@@ -18,6 +18,11 @@ async function handleResponse<T>(res: Response): Promise<T> {
     } catch {
       // response body wasn't JSON
     }
+    // Provide a user-friendly message for rate-limiting even if the server
+    // didn't include one in the response body.
+    if (res.status === 429 && !/too many/i.test(message)) {
+      message = 'Too many attempts. Please try again later.';
+    }
     throw new Error(message);
   }
   return res.json() as Promise<T>;

@@ -13,6 +13,7 @@ export function VerifyPage() {
   const { credentialId } = useParams<{ credentialId: string }>();
   const [verification, setVerification] = useState<CredentialVerification | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,7 +34,16 @@ export function VerifyPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Verification failed');
+          const status =
+            err && typeof err === 'object' && 'status' in err
+              ? (err as { status: number }).status
+              : undefined;
+
+          if (status === 404) {
+            setNotFound(true);
+          } else {
+            setError('Something went wrong. Please try again later.');
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -53,6 +63,23 @@ export function VerifyPage() {
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           <p className="text-sm text-gray-500">Verifying credential...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not-found state (404)
+  if (notFound) {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-gray-50 p-4">
+        <div className="w-full max-w-md rounded-xl bg-white p-8 text-center shadow-lg">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+            <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Not Found</h1>
+          <p className="mt-2 text-sm text-gray-600">This credential could not be found</p>
         </div>
       </div>
     );

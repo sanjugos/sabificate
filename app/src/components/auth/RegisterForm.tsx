@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 
@@ -18,22 +18,35 @@ export function RegisterForm() {
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const busyRef = useRef(false);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  const doRegister = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+
+    const form = formRef.current;
+    const emailVal = form?.querySelector<HTMLInputElement>('#reg-email')?.value || email;
+    const passwordVal = form?.querySelector<HTMLInputElement>('#reg-password')?.value || password;
+    const firstVal = form?.querySelector<HTMLInputElement>('#reg-first-name')?.value || firstName;
+    const lastVal = form?.querySelector<HTMLInputElement>('#reg-last-name')?.value || lastName;
+    const phoneVal = form?.querySelector<HTMLInputElement>('#reg-phone')?.value || phoneNumber;
+
     setError(null);
 
-    // Client-side validation
-    if (password.length < 8) {
+    if (passwordVal.length < 8) {
       setError('Password must be at least 8 characters.');
+      busyRef.current = false;
       return;
     }
-    if (!/\d/.test(password)) {
+    if (!/\d/.test(passwordVal)) {
       setError('Password must contain at least one number.');
+      busyRef.current = false;
       return;
     }
     if (!consentEducation) {
       setError('You must consent to educational data use to create an account.');
+      busyRef.current = false;
       return;
     }
 
@@ -41,11 +54,11 @@ export function RegisterForm() {
 
     try {
       await register({
-        email,
-        password,
-        first_name: firstName,
-        last_name: lastName,
-        phone_number: phoneNumber || undefined,
+        email: emailVal,
+        password: passwordVal,
+        first_name: firstVal,
+        last_name: lastVal,
+        phone_number: phoneVal || undefined,
         invitation_token: searchParams.get('token') ?? undefined,
         consent: {
           education_only: consentEducation,
@@ -57,11 +70,30 @@ export function RegisterForm() {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
+      busyRef.current = false;
     }
+  }, [register, email, password, firstName, lastName, phoneNumber, consentEducation, consentAggregate, consentFullProfile, searchParams]);
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    doRegister();
   }
 
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+
+    function onNativeSubmit(e: Event) {
+      e.preventDefault();
+      doRegister();
+    }
+
+    form.addEventListener('submit', onNativeSubmit);
+    return () => form.removeEventListener('submit', onNativeSubmit);
+  }, [doRegister]);
+
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto space-y-5 px-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="w-full max-w-sm mx-auto space-y-5 px-4">
       <h1 className="text-2xl font-bold text-center text-gray-900">Create account</h1>
 
       {error && (

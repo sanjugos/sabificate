@@ -35,6 +35,14 @@ export interface ProgressConflict {
   resolution: 'server_wins' | 'client_wins';
 }
 
+export interface RecommendedCourse {
+  course_id: string;
+  course_title: string;
+  course_slug: string;
+  difficulty_tier: string;
+  category: string;
+}
+
 export interface LearnerDashboard {
   enrolled_courses: EnrolledCourseSummary[];
   recent_activity: ActivityItem[];
@@ -44,6 +52,7 @@ export interface LearnerDashboard {
     total_learning_hours: number;
     current_streak_days: number;
   };
+  recommended_courses?: RecommendedCourse[];
 }
 
 export interface EnrolledCourseSummary {

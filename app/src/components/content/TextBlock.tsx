@@ -39,7 +39,7 @@ export function TextBlock({ content, dataSaverMode }: TextBlockProps) {
   );
 }
 
-/** Strip all markdown/html to plain text */
+/** Strip all markdown/html to plain text, replacing images with alt-text placeholders */
 function stripToPlainText(raw: string): string {
   return raw
     .replace(/<[^>]+>/g, '')
@@ -47,8 +47,10 @@ function stripToPlainText(raw: string): string {
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .replace(/\*(.+?)\*/g, '$1')
     .replace(/`(.+?)`/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, (_match, alt: string) =>
+      alt ? `[Image: ${alt}]` : '',
+    )
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
     .trim();
 }
 
@@ -61,14 +63,22 @@ function renderReduced(raw: string): string {
   html = html.replace(/\*(.+?)\*/g, '$1');
   html = html.replace(/`(.+?)`/g, '$1');
   html = html.replace(/#{1,6}\s+(.+)/g, '<p class="font-semibold text-[var(--text-h)]">$1</p>');
-  // images removed in data_saver
-  html = html.replace(/!\[([^\]]*)\]\([^)]+\)/g, '');
+  // images rendered with width constraint in data_saver
+  html = html.replace(
+    /!\[([^\]]*)\]\(([^)]+)\)/g,
+    '<img src="$2" alt="$1" class="max-w-[480px] w-full rounded-lg my-2" loading="lazy" />',
+  );
   // links as text
   html = html.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  // paragraphs
+  // paragraphs (skip already-tagged blocks like img, headings)
   html = html
     .split(/\n{2,}/)
-    .map((p) => `<p class="mb-2">${p.trim()}</p>`)
+    .map((segment) => {
+      const trimmed = segment.trim();
+      if (!trimmed) return '';
+      if (/^<(?:p|img)/.test(trimmed)) return trimmed;
+      return `<p class="mb-2">${trimmed}</p>`;
+    })
     .join('');
   return html;
 }

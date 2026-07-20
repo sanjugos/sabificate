@@ -41,6 +41,7 @@ export interface ContentBlock {
   explanation?: string;
   bloom_level?: string;
   difficulty_tier?: string;
+  axis?: 'stages_of_the_moment' | 'scenarios' | 'failure_modes' | 'role_lens';
 }
 
 export interface TrustClaim {
@@ -169,9 +170,19 @@ async function claudeGenerateDepthCards(
 
 ${nigerianClause}${avoidClause}
 
+FOUR-AXIS CONTENT FRAMEWORK:
+Every content block MUST be tagged with one of four pedagogical axes that structure how a competency is explored:
+- "stages_of_the_moment": Covers the temporal phases of applying the skill — prepare, open, navigate, close, follow up.
+- "scenarios": Explores the same skill in different interpersonal contexts — boss, peer, client, subordinate.
+- "failure_modes": Examines what goes wrong and how to recover — common mistakes, warning signs, recovery strategies.
+- "role_lens": Views the skill through different professional roles — employee, manager, entrepreneur facing the same challenge differently.
+
+Distribute axis tags across blocks so that ALL FOUR axes are represented across the full set of depth cards. Each block gets exactly one axis value.
+
 For each depth card, generate 3 ContentBlock objects. Each block must have:
 - type: one of "text_block", "quiz_block", "scenario_block", "artifact_block"
 - id: a unique string identifier (use format "s{nodeIndex}-{tier_letter}-{type_letter}{number}")
+- axis: one of "stages_of_the_moment", "scenarios", "failure_modes", "role_lens"
 - For text_block: include "content" (markdown string), "difficulty_tier", "bloom_level"
 - For quiz_block: include "question", "options" (array of 4 strings), "correct_answer" (0-based index), "explanation", "bloom_level", "difficulty_tier"
 - For scenario_block: include "content" (scenario description), "difficulty_tier", "bloom_level"
@@ -250,6 +261,13 @@ Bloom level: ${node.bloom_level}`;
   return { depthCards, trustClaims };
 }
 
+const VALID_AXES = ['stages_of_the_moment', 'scenarios', 'failure_modes', 'role_lens'] as const;
+type AxisValue = typeof VALID_AXES[number];
+
+function isValidAxis(v: unknown): v is AxisValue {
+  return typeof v === 'string' && (VALID_AXES as readonly string[]).includes(v);
+}
+
 function parseBlocks(tier: unknown): ContentBlock[] {
   if (!tier || typeof tier !== 'object') return [];
   const obj = tier as Record<string, unknown>;
@@ -266,6 +284,7 @@ function parseBlocks(tier: unknown): ContentBlock[] {
       explanation: typeof block.explanation === 'string' ? block.explanation : undefined,
       bloom_level: typeof block.bloom_level === 'string' ? block.bloom_level : undefined,
       difficulty_tier: typeof block.difficulty_tier === 'string' ? block.difficulty_tier : undefined,
+      axis: isValidAxis(block.axis) ? block.axis : undefined,
     };
   });
 }
@@ -410,6 +429,17 @@ async function mockGenerateCourse(brief: {
   let totalBlocks = 0;
 
   const enrichedSpine = brief.spine.map((node, idx) => {
+    // Axis rotation: distribute all 4 axes across 9 blocks per node.
+    // Pattern per node: f1=stages_of_the_moment, f2=scenarios, f3=failure_modes,
+    //                   w1=role_lens, w2=stages_of_the_moment, w3=scenarios,
+    //                   a1=failure_modes, a2=role_lens, a3=stages_of_the_moment
+    // This guarantees all 4 axes appear in every single node's blocks.
+    const axisRotation: Array<ContentBlock['axis']> = [
+      'stages_of_the_moment', 'scenarios', 'failure_modes',
+      'role_lens', 'stages_of_the_moment', 'scenarios',
+      'failure_modes', 'role_lens', 'stages_of_the_moment',
+    ];
+
     const foundationalBlocks: ContentBlock[] = [
       {
         type: 'text_block',
@@ -417,6 +447,7 @@ async function mockGenerateCourse(brief: {
         content: `## ${node.title} - Getting Started\n\nThis section introduces the fundamental concepts of ${node.title.toLowerCase()}. ${brief.contextMode === 'nigerian' ? 'In the Nigerian context, this is particularly relevant for financial services professionals operating under CBN guidelines.' : 'This foundational knowledge is essential for professionals in the field.'}`,
         difficulty_tier: 'foundational',
         bloom_level: 'remember',
+        axis: axisRotation[0],
       },
       {
         type: 'text_block',
@@ -424,6 +455,7 @@ async function mockGenerateCourse(brief: {
         content: `## Key Definitions\n\nBefore diving deeper, let us establish the key terms you will encounter throughout this module. Understanding these terms will help you follow the regulatory discussions ahead.`,
         difficulty_tier: 'foundational',
         bloom_level: 'understand',
+        axis: axisRotation[1],
       },
       {
         type: 'quiz_block',
@@ -439,6 +471,7 @@ async function mockGenerateCourse(brief: {
         explanation: `The primary purpose of ${node.title.toLowerCase()} is to ensure compliance with regulatory requirements while protecting all stakeholders involved.`,
         bloom_level: 'remember',
         difficulty_tier: 'foundational',
+        axis: axisRotation[2],
       },
     ];
 
@@ -449,6 +482,7 @@ async function mockGenerateCourse(brief: {
         content: `## ${node.title} - Working Knowledge\n\nBuilding on the fundamentals, this section explores the practical implementation of ${node.title.toLowerCase()}. ${brief.contextMode === 'nigerian' ? 'Nigerian financial institutions must align their practices with both CBN regulations and international standards such as FATF recommendations.' : 'Organizations must align their practices with relevant regulatory frameworks.'}`,
         difficulty_tier: 'working',
         bloom_level: 'apply',
+        axis: axisRotation[3],
       },
       {
         type: 'text_block',
@@ -456,6 +490,7 @@ async function mockGenerateCourse(brief: {
         content: `## Implementation Framework\n\nA structured approach to implementing ${node.title.toLowerCase()} involves three key phases: assessment, design, and monitoring. Each phase requires specific documentation and stakeholder engagement.`,
         difficulty_tier: 'working',
         bloom_level: 'apply',
+        axis: axisRotation[4],
       },
       {
         type: 'quiz_block',
@@ -471,6 +506,7 @@ async function mockGenerateCourse(brief: {
         explanation: `The best practice is to document the gap, assess its risk impact, and develop a remediation plan. Premature external reporting or drastic action may be disproportionate.`,
         bloom_level: 'apply',
         difficulty_tier: 'working',
+        axis: axisRotation[5],
       },
     ];
 
@@ -481,6 +517,7 @@ async function mockGenerateCourse(brief: {
         content: `## ${node.title} - Advanced Application\n\nAt this level, you will critically evaluate complex scenarios involving ${node.title.toLowerCase()}. ${brief.contextMode === 'nigerian' ? 'This includes navigating the intersection of CBN directives, NFIU requirements, and international correspondent banking expectations.' : 'This includes navigating complex multi-jurisdictional regulatory landscapes.'}`,
         difficulty_tier: 'applied',
         bloom_level: 'evaluate',
+        axis: axisRotation[6],
       },
       {
         type: 'text_block',
@@ -488,6 +525,7 @@ async function mockGenerateCourse(brief: {
         content: `## Strategic Considerations\n\nSenior professionals must balance regulatory compliance with business objectives. This requires understanding not just what the rules are, but why they exist and how they interact with broader organisational strategy.`,
         difficulty_tier: 'applied',
         bloom_level: 'evaluate',
+        axis: axisRotation[7],
       },
       {
         type: 'quiz_block',
@@ -503,6 +541,7 @@ async function mockGenerateCourse(brief: {
         explanation: `Strategic compliance leadership involves a comprehensive, risk-based response that addresses root causes, benchmarks against peers, and provides the board with a clear, prioritised remediation plan.`,
         bloom_level: 'evaluate',
         difficulty_tier: 'applied',
+        axis: axisRotation[8],
       },
     ];
 

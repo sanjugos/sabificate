@@ -1,3 +1,5 @@
+import { useRef, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 import { useDataSaverMode } from '../../lib/pwa/useDataSaverMode';
@@ -12,6 +14,23 @@ const DATA_SAVER_OPTIONS: { value: DataSaverMode; label: string; desc: string }[
 export default function Profile() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { mode, setMode } = useDataSaverMode();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    function handleClick(e: MouseEvent) {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-mode]');
+      if (btn) {
+        flushSync(() => { setMode(btn.getAttribute('data-mode') as DataSaverMode); });
+        return;
+      }
+      const logoutBtn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action="logout"]');
+      if (logoutBtn) { logout(); }
+    }
+    el.addEventListener('click', handleClick);
+    return () => el.removeEventListener('click', handleClick);
+  }, [setMode, logout]);
 
   if (isLoading) {
     return (
@@ -31,7 +50,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div ref={containerRef} className="p-4 space-y-6">
       <div className="flex items-center gap-4">
         <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-700">
           {user?.first_name?.[0]}{user?.last_name?.[0]}
@@ -51,7 +70,8 @@ export default function Profile() {
           {DATA_SAVER_OPTIONS.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => setMode(opt.value)}
+              data-mode={opt.value}
+              onClick={() => flushSync(() => setMode(opt.value))}
               className={`w-full rounded-lg border p-3 text-left transition-colors ${
                 mode === opt.value
                   ? 'border-blue-600 bg-blue-50'
@@ -85,6 +105,7 @@ export default function Profile() {
       </div>
 
       <button
+        data-action="logout"
         onClick={() => logout()}
         className="w-full rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 active:bg-red-100"
       >

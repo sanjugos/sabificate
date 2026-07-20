@@ -15,6 +15,7 @@ interface TrustClaim {
   verified: boolean;
   verified_by: string | null;
   verified_at: string | null;
+  status?: 'pending' | 'contradicted';
 }
 
 interface TrustClaimsResponse {
@@ -154,6 +155,38 @@ export function TrustClaimsPanel({ trackId }: TrustClaimsPanelProps) {
     }
   };
 
+  // Contradict a claim
+  const contradictClaim = async (claim: TrustClaim) => {
+    setSaving(true);
+    try {
+      const updated = await api.put<TrustClaim>(
+        `/studio/tracks/${trackId}/trust-claims/${claim.id}`,
+        { status: 'contradicted' },
+      );
+      setClaims((prev) => prev.map((c) => (c.id === claim.id ? updated : c)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to contradict claim');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Remove source from a claim
+  const unsourceClaim = async (claim: TrustClaim) => {
+    setSaving(true);
+    try {
+      const updated = await api.put<TrustClaim>(
+        `/studio/tracks/${trackId}/trust-claims/${claim.id}`,
+        { source_url: null, source_label: null },
+      );
+      setClaims((prev) => prev.map((c) => (c.id === claim.id ? updated : c)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove source');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -276,6 +309,15 @@ export function TrustClaimsPanel({ trackId }: TrustClaimsPanelProps) {
                           verified {new Date(claim.verified_at).toLocaleDateString()}
                         </span>
                       )}
+                      {!claim.verified && claim.status !== 'contradicted' && (
+                        <button
+                          onClick={() => contradictClaim(claim)}
+                          disabled={saving}
+                          className="text-[10px] text-red-500 hover:text-red-700 disabled:opacity-50"
+                        >
+                          Contradict
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -294,12 +336,21 @@ export function TrustClaimsPanel({ trackId }: TrustClaimsPanelProps) {
                           {claim.source_label || claim.source_url}
                         </a>
                         {!claim.verified && (
-                          <button
-                            onClick={() => startEdit(claim)}
-                            className="text-gray-400 hover:text-gray-600 text-[10px]"
-                          >
-                            edit
-                          </button>
+                          <>
+                            <button
+                              onClick={() => startEdit(claim)}
+                              className="text-gray-400 hover:text-gray-600 text-[10px]"
+                            >
+                              edit
+                            </button>
+                            <button
+                              onClick={() => unsourceClaim(claim)}
+                              disabled={saving}
+                              className="text-red-400 hover:text-red-600 text-[10px] disabled:opacity-50"
+                            >
+                              unsource
+                            </button>
+                          </>
                         )}
                       </div>
                     ) : (

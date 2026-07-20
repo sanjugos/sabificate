@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 import { api } from '../../lib/api/client';
@@ -33,7 +34,7 @@ interface PersonasResponse {
 
 // ── Icons for each persona ────────────────────────────────────────────────
 
-const PERSONA_ICONS: Record<string, JSX.Element> = {
+const PERSONA_ICONS: Record<string, React.JSX.Element> = {
   'new-graduate': (
     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
@@ -120,27 +121,31 @@ export default function Onboarding() {
 
   // When a persona is selected and user moves to screen 2, pre-set the default tier
   const handlePersonaSelect = useCallback((persona: Persona) => {
-    setSelectedPersona(persona);
-    setSelectedOption(null);
-    setResolvedTier(persona.default_proficiency);
-    setResolvedCustomerTier(persona.default_customer_tier);
-    setScreen(2);
+    flushSync(() => {
+      setSelectedPersona(persona);
+      setSelectedOption(null);
+      setResolvedTier(persona.default_proficiency);
+      setResolvedCustomerTier(persona.default_customer_tier);
+      setScreen(2);
+    });
   }, []);
 
   // When calibration answer is selected, resolve the tier
   const handleCalibrationAnswer = useCallback((optionIndex: number) => {
-    setSelectedOption(optionIndex);
-    if (selectedPersona && selectedPersona.calibration_questions.length > 0) {
-      const q = selectedPersona.calibration_questions[0];
-      const mapped = q.proficiency_map[String(optionIndex)];
-      if (mapped) {
-        setResolvedTier(mapped);
+    flushSync(() => {
+      setSelectedOption(optionIndex);
+      if (selectedPersona && selectedPersona.calibration_questions.length > 0) {
+        const q = selectedPersona.calibration_questions[0];
+        const mapped = q.proficiency_map[String(optionIndex)];
+        if (mapped) {
+          setResolvedTier(mapped);
+        }
       }
-    }
+    });
   }, [selectedPersona]);
 
   const handleContinueToResult = useCallback(() => {
-    setScreen(3);
+    flushSync(() => { setScreen(3); });
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -166,12 +171,54 @@ export default function Onboarding() {
     }
   }, [selectedPersona, resolvedTier, resolvedCustomerTier, selectedOption, navigate]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    function handleNativeClick(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+
+      const personaBtn = target.closest<HTMLButtonElement>('[data-persona-slug]');
+      if (personaBtn) {
+        const slug = personaBtn.getAttribute('data-persona-slug');
+        const p = personas.find(pp => pp.slug === slug);
+        if (p) handlePersonaSelect(p);
+        return;
+      }
+
+      const calBtn = target.closest<HTMLButtonElement>('[data-calibration-index]');
+      if (calBtn) {
+        handleCalibrationAnswer(Number(calBtn.getAttribute('data-calibration-index')));
+        return;
+      }
+
+      const actionBtn = target.closest<HTMLButtonElement>('[data-action]');
+      if (actionBtn) {
+        const action = actionBtn.getAttribute('data-action');
+        if (action === 'continue-to-result') handleContinueToResult();
+        else if (action === 'submit-onboarding') handleSubmit();
+        else if (action === 'back') flushSync(() => setScreen(1));
+        else if (action === 'toggle-override') flushSync(() => setManualOverride(true));
+      }
+
+      const tierBtn = target.closest<HTMLButtonElement>('[data-tier]');
+      if (tierBtn) {
+        flushSync(() => setResolvedTier(tierBtn.getAttribute('data-tier')!));
+      }
+    }
+
+    el.addEventListener('click', handleNativeClick);
+    return () => el.removeEventListener('click', handleNativeClick);
+  }, [personas, handlePersonaSelect, handleCalibrationAnswer, handleContinueToResult, handleSubmit]);
+
   // Auth guard
   if (authLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login?redirect=/onboarding" replace />;
 
   return (
-    <div className="min-h-svh bg-gray-50">
+    <div ref={containerRef} className="min-h-svh bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
@@ -211,6 +258,7 @@ export default function Onboarding() {
                   return (
                     <button
                       key={persona.slug}
+                      data-persona-slug={persona.slug}
                       onClick={() => handlePersonaSelect(persona)}
                       className={`w-full text-left rounded-xl border-2 ${colors.border} ${colors.bg} p-4 transition-shadow hover:shadow-md active:shadow-sm`}
                     >
@@ -237,7 +285,8 @@ export default function Onboarding() {
         {screen === 2 && selectedPersona && (
           <div>
             <button
-              onClick={() => setScreen(1)}
+              data-action="back"
+              onClick={() => flushSync(() => setScreen(1))}
               className="text-sm text-blue-700 font-medium mb-4 flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -261,7 +310,8 @@ export default function Onboarding() {
                   {(selectedPersona.calibration_questions[0].options as string[]).map((option, index) => (
                     <button
                       key={index}
-                      onClick={() => handleCalibrationAnswer(index)}
+                      data-calibration-index={index}
+                      onClick={() => flushSync(() => handleCalibrationAnswer(index))}
                       className={`w-full text-left rounded-lg border-2 px-4 py-3 text-sm transition-colors ${
                         selectedOption === index
                           ? 'border-blue-600 bg-blue-50 text-blue-900'
@@ -283,6 +333,7 @@ export default function Onboarding() {
                 </div>
 
                 <button
+                  data-action="continue-to-result"
                   onClick={handleContinueToResult}
                   disabled={selectedOption === null}
                   className="w-full mt-6 rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
@@ -294,6 +345,7 @@ export default function Onboarding() {
               <div>
                 <p className="text-sm text-gray-500 mb-4">No calibration question available. We will use the default level for your profile.</p>
                 <button
+                  data-action="continue-to-result"
                   onClick={handleContinueToResult}
                   className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white"
                 >
@@ -328,7 +380,8 @@ export default function Onboarding() {
 
             {!manualOverride ? (
               <button
-                onClick={() => setManualOverride(true)}
+                data-action="toggle-override"
+                onClick={() => flushSync(() => setManualOverride(true))}
                 className="block mx-auto text-sm text-gray-500 underline underline-offset-2 mb-6"
               >
                 Change my level
@@ -338,7 +391,8 @@ export default function Onboarding() {
                 {Object.entries(TIER_DESCRIPTIONS).map(([key, tier]) => (
                   <button
                     key={key}
-                    onClick={() => setResolvedTier(key)}
+                    data-tier={key}
+                    onClick={() => flushSync(() => setResolvedTier(key))}
                     className={`w-full text-left rounded-lg border-2 px-4 py-3 text-sm transition-colors ${
                       resolvedTier === key
                         ? 'border-blue-600 bg-blue-50 text-blue-900'
@@ -352,6 +406,7 @@ export default function Onboarding() {
             )}
 
             <button
+              data-action="submit-onboarding"
               onClick={handleSubmit}
               disabled={submitting}
               className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60 transition-opacity"

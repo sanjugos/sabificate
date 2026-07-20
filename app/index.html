@@ -7,10 +7,39 @@
     <title>SABIficate — Professional Microlearning</title>
     <meta name="description" content="Mobile-first microlearning for Nigerian working professionals. CPD-aligned courses in banking, finance, and professional development." />
     <meta name="theme-color" content="#1a56db" />
-    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="pragma" content="no-cache" />
+    <meta http-equiv="expires" content="0" />
+    <script>
+      // Kill any cached service worker that might be serving stale builds
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(r) { r.unregister(); });
+        });
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            names.forEach(function(n) { caches.delete(n); });
+          });
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Diagnostic: track native DOM events to prove they fire
+      document.addEventListener('submit', function(e) {
+        console.log('[NATIVE] submit event on', e.target.tagName, e.target.className);
+        window.__lastSubmitAt = Date.now();
+      }, true);
+      document.addEventListener('click', function(e) {
+        var t = e.target;
+        if (t.tagName === 'BUTTON' || t.closest && t.closest('button')) {
+          console.log('[NATIVE] click on button:', (t.closest ? t.closest('button') : t).textContent.trim().slice(0, 30));
+          window.__lastClickAt = Date.now();
+        }
+      }, true);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
