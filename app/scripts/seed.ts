@@ -1388,6 +1388,26 @@ export async function seed(): Promise<void> {
   }
   console.log(`  admin user ${adminUserId}`);
 
+  // ── 8a. Platform Admin + Curriculum Author + SME Reviewer ─────────────
+
+  const staffPasswordHash = await bcrypt.hash('staff1234', 12);
+
+  for (const [email, firstName, lastName, role] of [
+    ['platform@sabificate.com', 'Sanju', 'Gosain', 'platform_admin'],
+    ['author@sabificate.com', 'Gbitse', 'Barrow', 'curriculum_author'],
+    ['reviewer@sabificate.com', 'Mark', 'Otis', 'sme_reviewer'],
+  ] as const) {
+    const r = await query(
+      `INSERT INTO users (email, first_name, last_name, password_hash, role, consent_education_only, consent_anonymized_aggregate, consent_full_profile, email_verified, is_active)
+       VALUES ($1, $2, $3, $4, $5, true, true, true, true, true)
+       ON CONFLICT (email) DO NOTHING
+       RETURNING id`,
+      [email, firstName, lastName, staffPasswordHash, role],
+    );
+    if (r.rows.length > 0) counts.users++;
+    console.log(`  ${role} user ${email}`);
+  }
+
   // ── 8b. Departments ───────────────────────────────────────────────────
 
   const departmentNames = ['Compliance', 'Operations'];
