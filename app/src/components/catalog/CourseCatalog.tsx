@@ -196,7 +196,16 @@ export function CourseCatalog() {
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
   const filterCounts = useMemo(() => {
-    const all = (apiAvailable && courses.length > 0 ? courses : STATIC_COURSES) as CourseSummary[];
+    if (apiAvailable) {
+      const catCounts: Record<string, number> = {};
+      for (const cat of categories) {
+        catCounts[cat.slug] = cat.course_count;
+      }
+      const totalCourses = categories.reduce((sum, cat) => sum + cat.course_count, 0);
+      return { catCounts, diffCounts: { foundational: 0, working: 0, applied: 0 }, totalForCat: totalCourses, totalForDiff: total };
+    }
+
+    const all = STATIC_COURSES as CourseSummary[];
     const q = debouncedSearch.toLowerCase();
     const afterSearch = debouncedSearch
       ? all.filter((c) => c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q))
@@ -220,8 +229,8 @@ export function CourseCatalog() {
       diffCounts[c.difficulty_level] = (diffCounts[c.difficulty_level] || 0) + 1;
     }
 
-    return { catCounts, diffCounts, totalForCat: apiAvailable ? total : afterSearchAndDifficulty.length, totalForDiff: apiAvailable ? total : afterSearchAndCategory.length };
-  }, [debouncedSearch, selectedCategory, selectedDifficulty, apiAvailable, courses, total]);
+    return { catCounts, diffCounts, totalForCat: afterSearchAndDifficulty.length, totalForDiff: afterSearchAndCategory.length };
+  }, [debouncedSearch, selectedCategory, selectedDifficulty, apiAvailable, categories, total]);
 
   return (
     <section className="px-4 py-6 max-w-6xl mx-auto">

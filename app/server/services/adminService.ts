@@ -12,10 +12,12 @@ import type {
 
 // ── getOverview ────────────────────────────────────────────────────────────
 
-export async function getOverview(orgId: string): Promise<AdminDashboardOverview> {
+export async function getOverview(orgId: string | null): Promise<AdminDashboardOverview> {
+  const orgFilter = orgId ? 'WHERE org_id = $1 AND is_active = true' : 'WHERE is_active = true';
+  const params = orgId ? [orgId] : [];
   const result = await query(
     `WITH org_users AS (
-       SELECT id FROM users WHERE org_id = $1 AND is_active = true
+       SELECT id FROM users ${orgFilter}
      ),
      org_enrollments AS (
        SELECT e.* FROM enrollment e
@@ -44,7 +46,7 @@ export async function getOverview(orgId: string): Promise<AdminDashboardOverview
        (SELECT COALESCE(avg_score, 0)::numeric(5,1) FROM scores) AS avg_assessment_score,
        (SELECT total_seconds FROM hours) AS total_seconds,
        (SELECT COUNT(DISTINCT course_id)::int FROM org_enrollments) AS courses_assigned`,
-    [orgId],
+    params,
   );
 
   const r = result.rows[0];
@@ -63,16 +65,22 @@ export async function getOverview(orgId: string): Promise<AdminDashboardOverview
 // ── getLearners ────────────────────────────────────────────────────────────
 
 export async function getLearners(
-  orgId: string,
+  orgId: string | null,
   params: { search?: string; department_id?: string; page?: number; limit?: number },
 ): Promise<{ learners: AdminLearnerRow[]; pagination: Pagination }> {
   const page = params.page ?? 1;
   const limit = Math.min(params.limit ?? 25, 100);
   const offset = (page - 1) * limit;
 
-  const conditions: string[] = ['u.org_id = $1', 'u.is_active = true'];
-  const values: unknown[] = [orgId];
-  let paramIndex = 2;
+  const conditions: string[] = ['u.is_active = true'];
+  const values: unknown[] = [];
+  let paramIndex = 1;
+
+  if (orgId) {
+    conditions.push(`u.org_id = $${paramIndex}`);
+    values.push(orgId);
+    paramIndex++;
+  }
 
   if (params.search) {
     conditions.push(
@@ -141,7 +149,11 @@ export async function getLearners(
 
 // ── getCourseStats ─────────────────────────────────────────────────────────
 
-export async function getCourseStats(orgId: string): Promise<AdminCourseRow[]> {
+export async function getCourseStats(orgId: string | null): Promise<AdminCourseRow[]> {
+  const orgJoin = orgId
+    ? 'JOIN users u ON u.id = e.user_id AND u.org_id = $1'
+    : 'JOIN users u ON u.id = e.user_id';
+  const params = orgId ? [orgId] : [];
   const result = await query(
     `SELECT
        c.id AS course_id,
@@ -151,12 +163,12 @@ export async function getCourseStats(orgId: string): Promise<AdminCourseRow[]> {
        COALESCE(AVG(CASE WHEN aa.is_correct THEN 100.0 ELSE 0.0 END), 0)::numeric(5,1) AS avg_score
      FROM courses c
      JOIN enrollment e ON e.course_id = c.id
-     JOIN users u ON u.id = e.user_id AND u.org_id = $1
+     ${orgJoin}
      LEFT JOIN assessment_attempts aa ON aa.user_id = u.id
        AND aa.lesson_id IN (SELECT l.id FROM lessons l WHERE l.course_id = c.id)
      GROUP BY c.id, c.title
      ORDER BY enrolled DESC`,
-    [orgId],
+    params,
   );
 
   return result.rows.map((r) => ({

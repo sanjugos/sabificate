@@ -27,6 +27,10 @@ export default function LessonPlayerPage() {
 
   useEffect(() => {
     if (authLoading || !slug || !lessonId) return;
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -67,7 +71,7 @@ export default function LessonPlayerPage() {
     );
   }
 
-  if (error === 'sign-in-required' || (!isAuthenticated && !content && !loading)) {
+  if (!isAuthenticated) {
     return (
       <div className="p-6 text-center">
         <p className="text-gray-500 mb-4">Sign in to access this lesson</p>

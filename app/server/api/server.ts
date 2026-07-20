@@ -34,7 +34,7 @@ declare module 'fastify' {
       reply: import('fastify').FastifyReply,
     ) => Promise<void>;
     requireRole: (
-      role: string,
+      role: string | string[],
     ) => (
       request: import('fastify').FastifyRequest,
       reply: import('fastify').FastifyReply,
@@ -109,13 +109,14 @@ export async function buildServer() {
     },
   );
 
-  server.decorate('requireRole', function (role: string) {
+  server.decorate('requireRole', function (role: string | string[]) {
+    const allowed = Array.isArray(role) ? role : [role];
     return async function (
       request: import('fastify').FastifyRequest,
       reply: import('fastify').FastifyReply,
     ) {
-      if (!request.user || request.user.role !== role) {
-        return reply.status(403).send({ statusCode: 403, error: 'Forbidden', message: `Requires ${role} role` });
+      if (!request.user || !allowed.includes(request.user.role)) {
+        return reply.status(403).send({ statusCode: 403, error: 'Forbidden', message: `Requires ${allowed.join(' or ')} role` });
       }
     };
   });

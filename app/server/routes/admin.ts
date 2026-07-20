@@ -34,9 +34,9 @@ const cpdReportSchema = z.object({
 // ── Plugin ────────────────────────────────────────────────────────────────
 
 export default async function adminRoutes(fastify: FastifyInstance) {
-  // All routes require authentication + corporate_admin role
+  // All routes require authentication + admin role
   fastify.addHook('preHandler', fastify.authenticate);
-  fastify.addHook('preHandler', fastify.requireRole('corporate_admin'));
+  fastify.addHook('preHandler', fastify.requireRole(['corporate_admin', 'platform_admin']));
 
   // ── POST /api/v1/admin/learners/bulk-upload ────────────────────────────
   // Accepts raw CSV text body (content-type: text/csv)
@@ -142,15 +142,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     '/api/v1/admin/dashboard/overview',
     async (request: FastifyRequest, reply: FastifyReply) => {
       const orgId = request.user.org_id;
-      if (!orgId) {
-        return reply.status(403).send({
-          statusCode: 403,
-          error: 'Forbidden',
-          message: 'User is not associated with an organization',
-        });
-      }
-
-      return adminService.getOverview(orgId);
+      return adminService.getOverview(orgId ?? null);
     },
   );
 
@@ -159,13 +151,6 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     '/api/v1/admin/dashboard/learners',
     async (request: FastifyRequest, reply: FastifyReply) => {
       const orgId = request.user.org_id;
-      if (!orgId) {
-        return reply.status(403).send({
-          statusCode: 403,
-          error: 'Forbidden',
-          message: 'User is not associated with an organization',
-        });
-      }
 
       const parsed = dashboardLearnersQuerySchema.safeParse(request.query);
       if (!parsed.success) {
@@ -177,7 +162,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         });
       }
 
-      return adminService.getLearners(orgId, parsed.data);
+      return adminService.getLearners(orgId ?? null, parsed.data);
     },
   );
 
@@ -186,15 +171,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     '/api/v1/admin/dashboard/courses',
     async (request: FastifyRequest, reply: FastifyReply) => {
       const orgId = request.user.org_id;
-      if (!orgId) {
-        return reply.status(403).send({
-          statusCode: 403,
-          error: 'Forbidden',
-          message: 'User is not associated with an organization',
-        });
-      }
-
-      return adminService.getCourseStats(orgId);
+      return adminService.getCourseStats(orgId ?? null);
     },
   );
 
