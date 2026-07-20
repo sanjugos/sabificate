@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { SubscriptionPlan, InitializePaymentResponse } from '../../../contracts/api/payments';
 import { api } from '../../lib/api/client';
 
@@ -47,14 +47,15 @@ export default function PaystackCheckout({
     }
   }, [plan.id, paymentType]);
 
-  // Check for returning from Paystack
-  const urlParams = new URLSearchParams(window.location.search);
-  const returnRef = urlParams.get('reference') ?? urlParams.get('trxref');
-
-  if (returnRef) {
-    // Verify the payment
-    void verifyAndNotify(returnRef, onSuccess);
-  }
+  const verifiedRef = useRef(false);
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnRef = urlParams.get('reference') ?? urlParams.get('trxref');
+    if (returnRef && !verifiedRef.current) {
+      verifiedRef.current = true;
+      void verifyAndNotify(returnRef, onSuccess);
+    }
+  }, [onSuccess]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

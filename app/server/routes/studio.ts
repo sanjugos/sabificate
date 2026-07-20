@@ -190,7 +190,7 @@ export default async function studioRoutes(fastify: FastifyInstance) {
   fastify.get(
     '/api/v1/studio/tracks',
     async (request: FastifyRequest, reply: FastifyReply) => {
-      if (!canAuthor(request.user.role)) return forbidden(reply);
+      if (!canReview(request.user.role)) return forbidden(reply);
 
       const parsed = trackListQuerySchema.safeParse(request.query);
       if (!parsed.success) return badRequest(reply, 'Invalid query parameters', parsed.error.flatten().fieldErrors);
@@ -240,7 +240,7 @@ export default async function studioRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { trackId: string } }>(
     '/api/v1/studio/tracks/:trackId',
     async (request, reply) => {
-      if (!canAuthor(request.user.role)) return forbidden(reply);
+      if (!canReview(request.user.role)) return forbidden(reply);
 
       const { trackId } = request.params;
       const trackResult = await query(

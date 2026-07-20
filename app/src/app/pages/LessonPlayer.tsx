@@ -23,7 +23,7 @@ export default function LessonPlayerPage() {
   const [error, setError] = useState<string | null>(null);
   const [degradedAccess, setDegradedAccess] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState(0);
-  const tier: DifficultyTier = (user?.data_saver_mode as DifficultyTier) ?? 'working';
+  const tier: DifficultyTier = (user as Record<string, unknown> | null)?.proficiency_level as DifficultyTier ?? 'working';
 
   useEffect(() => {
     if (authLoading || !slug || !lessonId) return;
@@ -106,9 +106,23 @@ export default function LessonPlayerPage() {
         difficulty={tier}
         dataSaverMode={mode}
         isOffline={false}
-        onProgressUpdate={() => {}}
+        onProgressUpdate={(percent: number) => {
+          if (!lessonId) return;
+          api.post(`/learner/lessons/${lessonId}/progress`, {
+            lesson_id: lessonId,
+            status: percent >= 100 ? 'completed' : 'in_progress',
+            progress_percent: Math.min(percent, 100),
+          }).catch(() => {});
+        }}
         onQuizSubmit={() => {}}
-        onLessonComplete={() => {}}
+        onLessonComplete={() => {
+          if (!lessonId) return;
+          api.post(`/learner/lessons/${lessonId}/progress`, {
+            lesson_id: lessonId,
+            status: 'completed',
+            progress_percent: 100,
+          }).catch(() => {});
+        }}
       />
     </>
   );

@@ -47,17 +47,20 @@ export default function Dashboard() {
       setPersonaChecked(true);
       return;
     }
+    const staffRoles = ['corporate_admin', 'platform_admin', 'curriculum_author', 'sme_reviewer'];
+    if (user && staffRoles.includes(user.role)) {
+      setPersonaChecked(true);
+      return;
+    }
     api.get<PersonaResponse>('/learner/persona')
       .then((res) => {
         if (!res.persona) {
           setNeedsOnboarding(true);
         }
       })
-      .catch(() => {
-        // If the call fails, don't block the dashboard
-      })
+      .catch(() => {})
       .finally(() => setPersonaChecked(true));
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     if (!isAuthenticated) {

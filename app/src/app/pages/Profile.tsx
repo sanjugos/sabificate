@@ -71,7 +71,8 @@ export default function Profile() {
             <button
               key={opt.value}
               data-mode={opt.value}
-              onClick={() => flushSync(() => setMode(opt.value))}
+              type="button"
+              onClick={() => setMode(opt.value)}
               className={`w-full rounded-lg border p-3 text-left transition-colors ${
                 mode === opt.value
                   ? 'border-blue-600 bg-blue-50'
@@ -106,6 +107,7 @@ export default function Profile() {
 
       <button
         data-action="logout"
+        type="button"
         onClick={() => logout()}
         className="w-full rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 active:bg-red-100"
       >

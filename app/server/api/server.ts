@@ -143,6 +143,48 @@ export async function buildServer() {
   return server;
 }
 
+// ── Demo seed (in-memory mode only) ───────────────────────────────────────
+
+async function seedDemoUsers() {
+  if (process.env.DEV_INMEMORY !== 'true') return;
+
+  const { query: dbQuery } = await import('../db/index.js');
+  const bcrypt = await import('bcryptjs');
+
+  // pg-mem names the role CHECK as users_constraint_1 — drop it so new roles work
+  for (const name of ['users_role_check', 'users_constraint_1']) {
+    try { await dbQuery(`ALTER TABLE users DROP CONSTRAINT ${name}`); } catch {}
+  }
+
+  const demoHash = await bcrypt.hash('demo1234', 12);
+  const adminHash = await bcrypt.hash('admin1234', 12);
+  const staffHash = await bcrypt.hash('staff1234', 12);
+
+  const users: [string, string, string, string, string][] = [
+    ['demo@sabificate.com', 'Demo', 'Learner', 'learner', demoHash],
+    ['admin@firstbank-training.ng', 'FirstBank', 'Admin', 'corporate_admin', adminHash],
+    ['platform@sabificate.com', 'Sanju', 'Gosain', 'platform_admin', staffHash],
+    ['author@sabificate.com', 'Gbitse', 'Barrow', 'curriculum_author', staffHash],
+    ['reviewer@sabificate.com', 'Mark', 'Otis', 'sme_reviewer', staffHash],
+  ];
+
+  for (const [email, first, last, role, hash] of users) {
+    try {
+      const exists = await dbQuery('SELECT id FROM users WHERE email = $1', [email]);
+      if (exists.rows.length === 0) {
+        await dbQuery(
+          `INSERT INTO users (email, password_hash, first_name, last_name, role, email_verified)
+           VALUES ($1, $2, $3, $4, $5, true)`,
+          [email, hash, first, last, role],
+        );
+      }
+    } catch (err) {
+      console.warn(`[seed] Could not create ${email}:`, err instanceof Error ? err.message : err);
+    }
+  }
+  console.log('[seed] Demo users seeded');
+}
+
 // ── Entrypoint ─────────────────────────────────────────────────────────────
 
 async function main() {
@@ -152,6 +194,7 @@ async function main() {
   try {
     await server.listen({ port, host: '0.0.0.0' });
     server.log.info(`Server listening on http://0.0.0.0:${port}`);
+    await seedDemoUsers();
   } catch (err) {
     server.log.error(err);
     process.exit(1);

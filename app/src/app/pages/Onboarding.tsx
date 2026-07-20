@@ -259,6 +259,7 @@ export default function Onboarding() {
                     <button
                       key={persona.slug}
                       data-persona-slug={persona.slug}
+                      type="button"
                       onClick={() => handlePersonaSelect(persona)}
                       className={`w-full text-left rounded-xl border-2 ${colors.border} ${colors.bg} p-4 transition-shadow hover:shadow-md active:shadow-sm`}
                     >
@@ -286,6 +287,7 @@ export default function Onboarding() {
           <div>
             <button
               data-action="back"
+              type="button"
               onClick={() => flushSync(() => setScreen(1))}
               className="text-sm text-blue-700 font-medium mb-4 flex items-center gap-1"
             >
@@ -311,7 +313,8 @@ export default function Onboarding() {
                     <button
                       key={index}
                       data-calibration-index={index}
-                      onClick={() => flushSync(() => handleCalibrationAnswer(index))}
+                      type="button"
+                      onClick={() => handleCalibrationAnswer(index)}
                       className={`w-full text-left rounded-lg border-2 px-4 py-3 text-sm transition-colors ${
                         selectedOption === index
                           ? 'border-blue-600 bg-blue-50 text-blue-900'
@@ -334,6 +337,7 @@ export default function Onboarding() {
 
                 <button
                   data-action="continue-to-result"
+                  type="button"
                   onClick={handleContinueToResult}
                   disabled={selectedOption === null}
                   className="w-full mt-6 rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
@@ -346,6 +350,7 @@ export default function Onboarding() {
                 <p className="text-sm text-gray-500 mb-4">No calibration question available. We will use the default level for your profile.</p>
                 <button
                   data-action="continue-to-result"
+                  type="button"
                   onClick={handleContinueToResult}
                   className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white"
                 >
@@ -381,7 +386,8 @@ export default function Onboarding() {
             {!manualOverride ? (
               <button
                 data-action="toggle-override"
-                onClick={() => flushSync(() => setManualOverride(true))}
+                type="button"
+                onClick={() => setManualOverride(true)}
                 className="block mx-auto text-sm text-gray-500 underline underline-offset-2 mb-6"
               >
                 Change my level
@@ -392,7 +398,8 @@ export default function Onboarding() {
                   <button
                     key={key}
                     data-tier={key}
-                    onClick={() => flushSync(() => setResolvedTier(key))}
+                    type="button"
+                    onClick={() => setResolvedTier(key)}
                     className={`w-full text-left rounded-lg border-2 px-4 py-3 text-sm transition-colors ${
                       resolvedTier === key
                         ? 'border-blue-600 bg-blue-50 text-blue-900'
@@ -407,6 +414,7 @@ export default function Onboarding() {
 
             <button
               data-action="submit-onboarding"
+              type="button"
               onClick={handleSubmit}
               disabled={submitting}
               className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60 transition-opacity"
