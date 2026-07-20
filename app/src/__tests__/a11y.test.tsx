@@ -49,9 +49,11 @@ vi.mock('../lib/sync/SyncContext', () => ({
 function renderAppShell(children?: React.ReactNode) {
   return render(
     <BrowserRouter>
-      <DataSaverProvider>
-        <AppShell>{children ?? <p>content</p>}</AppShell>
-      </DataSaverProvider>
+      <AuthProvider>
+        <DataSaverProvider>
+          <AppShell>{children ?? <p>content</p>}</AppShell>
+        </DataSaverProvider>
+      </AuthProvider>
     </BrowserRouter>,
   );
 }

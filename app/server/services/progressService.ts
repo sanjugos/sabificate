@@ -140,6 +140,7 @@ export async function getCourseProgress(
       completed_at: r.completed_at?.toISOString() ?? null,
     })),
     overall_percent: Math.round((completedLessons / totalLessons) * 100),
+    total_lessons: totalLessons,
   };
 }
 

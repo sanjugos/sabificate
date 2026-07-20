@@ -131,8 +131,8 @@ describe('Pricing page — Paystack subscription flow (T-012)', () => {
       expect(proElements.length).toBeGreaterThanOrEqual(1);
     });
 
-    // NGN currency should be displayed for individual plans
-    const ngnElements = screen.getAllByText(/NGN/);
+    // ₦ currency symbol should be displayed for individual plans
+    const ngnElements = screen.getAllByText(/₦/);
     expect(ngnElements.length).toBeGreaterThan(0);
 
     // Professional plan price should display 2,500

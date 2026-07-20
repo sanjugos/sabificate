@@ -200,8 +200,8 @@ export default async function studioRoutes(fastify: FastifyInstance) {
       const params: unknown[] = [];
       const conditions: string[] = [];
 
-      // Scope to user unless admin
-      if (!isAdmin(request.user.role)) {
+      // Scope to user unless admin or reviewer
+      if (!isAdmin(request.user.role) && request.user.role !== 'sme_reviewer') {
         params.push(request.user.user_id);
         conditions.push(`created_by = $${params.length}`);
       }

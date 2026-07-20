@@ -59,7 +59,7 @@ export default function Profile() {
           <h1 className="text-lg font-bold text-gray-900">{user?.first_name} {user?.last_name}</h1>
           <p className="text-sm text-gray-500">{user?.email}</p>
           <span className="inline-block mt-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 capitalize">
-            {user?.role?.replace('_', ' ')}
+            {user?.role?.replaceAll('_', ' ').replace(/\bsme\b/i, 'SME')}
           </span>
         </div>
       </div>

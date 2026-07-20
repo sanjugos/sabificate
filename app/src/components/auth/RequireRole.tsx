@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 import type { UserRole } from '../../../contracts/types';
 import type { ReactNode } from 'react';
@@ -10,6 +10,7 @@ interface RequireRoleProps {
 
 export function RequireRole({ role, children }: RequireRoleProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -20,7 +21,7 @@ export function RequireRole({ role, children }: RequireRoleProps) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
   const allowed = Array.isArray(role) ? role : [role];

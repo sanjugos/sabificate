@@ -36,19 +36,19 @@ const b2bPlans = [
     name: 'Compliance Essentials',
     price: '3,500',
     period: '/seat/month',
-    currency: 'NGN',
+    currency: '₦',
   },
   {
     name: 'Professional',
     price: '5,500',
     period: '/seat/month',
-    currency: 'NGN',
+    currency: '₦',
   },
   {
     name: 'Enterprise',
     price: '8,000',
     period: '/seat/month',
-    currency: 'NGN',
+    currency: '₦',
   },
 ];
 
@@ -165,7 +165,7 @@ export default function Pricing() {
     const annualEquivalent = monthlyPlan.price_ngn * 12;
     const savings = annualEquivalent - plan.price_ngn;
     if (savings > 0) {
-      return `Save NGN ${new Intl.NumberFormat('en-NG').format(savings)}`;
+      return `Save ₦${new Intl.NumberFormat('en-NG').format(savings)}`;
     }
     return null;
   }
@@ -223,7 +223,7 @@ export default function Pricing() {
                 {plan.name}
               </h2>
               <div className="mb-6">
-                <span className="text-sm text-gray-500">NGN </span>
+                <span className="text-sm text-gray-500">₦</span>
                 <span className="text-4xl font-bold text-gray-900">
                   {new Intl.NumberFormat('en-NG').format(plan.price_ngn)}
                 </span>

@@ -146,7 +146,7 @@ export async function getCourseBySlug(
   const modules = await Promise.all(
     modulesResult.rows.map(async (mod) => {
       const lessonsResult = await query(
-        `SELECT id, title, sort_order, estimated_duration_minutes, has_quiz, has_artifact
+        `SELECT id, title, sort_order, estimated_duration_minutes, has_quiz, has_artifact, is_free
          FROM lessons
          WHERE module_id = $1 AND is_published = true
          ORDER BY sort_order`,
@@ -164,6 +164,7 @@ export async function getCourseBySlug(
           estimated_duration_minutes: l.estimated_duration_minutes ?? 0,
           has_quiz: l.has_quiz ?? false,
           has_artifact: l.has_artifact ?? false,
+          is_free: l.is_free ?? false,
         })),
       };
     }),

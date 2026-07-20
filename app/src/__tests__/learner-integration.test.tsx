@@ -440,7 +440,7 @@ describe('Learner Integration — T-015', () => {
       },
     ];
 
-    it('renders Free and Professional tiers with NGN pricing from API data', async () => {
+    it('renders Free and Professional tiers with ₦ pricing from API data', async () => {
       setUnauthenticated();
 
       mockGet.mockImplementation((path: string) => {
@@ -470,8 +470,8 @@ describe('Learner Integration — T-015', () => {
       const proElements = screen.getAllByText('Professional');
       expect(proElements.length).toBeGreaterThanOrEqual(1);
 
-      // NGN currency indicator should be present
-      const ngnElements = screen.getAllByText(/NGN/);
+      // ₦ currency symbol should be present
+      const ngnElements = screen.getAllByText(/₦/);
       expect(ngnElements.length).toBeGreaterThan(0);
 
       // Professional price should show 2,500

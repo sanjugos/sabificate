@@ -120,14 +120,37 @@ export default function Dashboard() {
     );
   }
 
+  const isStaffRole = user?.role && ['platform_admin', 'corporate_admin', 'curriculum_author', 'sme_reviewer'].includes(user.role);
+
   return (
     <div className="p-4 space-y-6">
       <div>
         <h1 className="text-xl font-bold text-gray-900">
           Welcome back, {user?.first_name}
         </h1>
-        <p className="text-sm text-gray-500">Continue your learning journey</p>
+        <p className="text-sm text-gray-500">
+          {isStaffRole ? 'Manage your platform' : 'Continue your learning journey'}
+        </p>
       </div>
+
+      {isStaffRole && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {['platform_admin', 'corporate_admin'].includes(user!.role) && (
+            <Link to="/admin" className="block rounded-lg border border-blue-200 bg-blue-50 p-4 active:bg-blue-100">
+              <h3 className="font-medium text-blue-900 text-sm">Admin Panel</h3>
+              <p className="text-xs text-blue-700 mt-1">User management, organization settings</p>
+            </Link>
+          )}
+          <Link to="/studio" className="block rounded-lg border border-purple-200 bg-purple-50 p-4 active:bg-purple-100">
+            <h3 className="font-medium text-purple-900 text-sm">Curriculum Studio</h3>
+            <p className="text-xs text-purple-700 mt-1">Authoring pipeline, track management</p>
+          </Link>
+          <Link to="/courses" className="block rounded-lg border border-gray-200 bg-gray-50 p-4 active:bg-gray-100">
+            <h3 className="font-medium text-gray-900 text-sm">Course Catalog</h3>
+            <p className="text-xs text-gray-600 mt-1">Browse all published courses</p>
+          </Link>
+        </div>
+      )}
 
       {dashboard && (
         <div className="grid grid-cols-2 gap-3">

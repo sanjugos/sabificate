@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 import { api } from '../../lib/api/client';
@@ -24,7 +24,11 @@ const STATUS_TO_STAGE: Record<string, number> = {
 type Track = Record<string, unknown>;
 
 export default function CurriculumStudio() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const canCreateTrack = useMemo(() => {
+    const authorRoles = ['curriculum_author', 'platform_admin', 'corporate_admin', 'founder', 'admin'];
+    return user?.role ? authorRoles.includes(user.role) : false;
+  }, [user]);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
@@ -287,17 +291,19 @@ export default function CurriculumStudio() {
             </div>
             <p className="text-sm text-gray-600 mt-1">7-stage authoring pipeline for course creation</p>
           </div>
-          <button
-            onClick={() => {
-              setSelectedTrackId(null);
-              setTrack(null);
-              setActiveStage(0);
-              setView('editor');
-            }}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
-          >
-            + New Track
-          </button>
+          {canCreateTrack && (
+            <button
+              onClick={() => {
+                setSelectedTrackId(null);
+                setTrack(null);
+                setActiveStage(0);
+                setView('editor');
+              }}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
+            >
+              + New Track
+            </button>
+          )}
         </div>
 
         {error && (

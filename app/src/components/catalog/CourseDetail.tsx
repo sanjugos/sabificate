@@ -43,6 +43,7 @@ interface CourseDetail {
 interface CourseProgressSummary {
   lessons: { lesson_id: string; status: string; progress_percent: number; completed_at: string | null }[];
   overall_percent: number;
+  total_lessons: number;
 }
 
 /* ------------------------------------------------------------------ */
@@ -284,7 +285,7 @@ export function CourseDetailView() {
                 Progress
               </span>
               <span className="text-xs text-gray-500">
-                {progress.lessons.filter((l) => l.status === 'completed').length}/{progress.lessons.length} lessons (
+                {progress.lessons.filter((l) => l.status === 'completed').length}/{progress.total_lessons || course.lesson_count} lessons (
                 {progress.overall_percent}%)
               </span>
             </div>
@@ -314,7 +315,10 @@ export function CourseDetailView() {
         ) : (
           <button
             type="button"
-            onClick={isEnrolled ? undefined : handleEnroll}
+            onClick={isEnrolled ? () => {
+              const firstLesson = sortedModules[0]?.lessons.sort((a, b) => a.sort_order - b.sort_order)[0];
+              if (firstLesson) navigate(`/courses/${course.slug}/lessons/${firstLesson.id}`);
+            } : handleEnroll}
             disabled={enrolling}
             className={`w-full sm:w-auto rounded-lg px-6 py-2.5 text-sm font-medium transition-colors ${
               isEnrolled
