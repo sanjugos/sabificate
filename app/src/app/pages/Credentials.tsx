@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import type { Credential } from '../../../contracts/api/credentials';
 import { CredentialList } from '../../components/credentials/CredentialList';
 import { CredentialDetail } from '../../components/credentials/CredentialDetail';
@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth/useAuth';
 
 export default function Credentials() {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
   const [selected, setSelected] = useState<Credential | null>(null);
 
   if (isLoading) {
@@ -21,7 +22,7 @@ export default function Credentials() {
     return (
       <div className="p-6 text-center">
         <p className="text-gray-500 mb-4">Sign in to view your credentials</p>
-        <Link to="/login" className="text-blue-700 font-medium">Sign In</Link>
+        <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`} className="text-blue-700 font-medium">Sign In</Link>
       </div>
     );
   }

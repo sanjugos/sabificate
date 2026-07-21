@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { flushSync } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/useAuth';
 import { useDataSaverMode } from '../../lib/pwa/useDataSaverMode';
 import type { DataSaverMode } from '../../../contracts/types';
@@ -14,6 +14,7 @@ const DATA_SAVER_OPTIONS: { value: DataSaverMode; label: string; desc: string }[
 export default function Profile() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { mode, setMode } = useDataSaverMode();
+  const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function Profile() {
     return (
       <div className="p-6 text-center">
         <p className="text-gray-500 mb-4">Sign in to view your profile</p>
-        <Link to="/login" className="text-blue-700 font-medium">Sign In</Link>
+        <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`} className="text-blue-700 font-medium">Sign In</Link>
       </div>
     );
   }

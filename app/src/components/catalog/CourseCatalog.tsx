@@ -202,7 +202,11 @@ export function CourseCatalog() {
         catCounts[cat.slug] = cat.course_count;
       }
       const totalCourses = categories.reduce((sum, cat) => sum + cat.course_count, 0);
-      return { catCounts, diffCounts: { foundational: 0, working: 0, applied: 0 }, totalForCat: totalCourses, totalForDiff: total };
+      const diffCounts: Record<string, number> = { foundational: 0, working: 0, applied: 0 };
+      for (const c of courses) {
+        diffCounts[c.difficulty_level] = (diffCounts[c.difficulty_level] || 0) + 1;
+      }
+      return { catCounts, diffCounts, totalForCat: totalCourses, totalForDiff: total };
     }
 
     const all = STATIC_COURSES as CourseSummary[];
