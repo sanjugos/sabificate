@@ -19,6 +19,7 @@ const PublicVerify = lazy(() => import('./pages/PublicVerify'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const CurriculumStudio = lazy(() => import('./pages/CurriculumStudio'));
 const ConceptCatalog = lazy(() => import('../components/studio/ConceptCatalog'));
+const TeamGuide = lazy(() => import('./pages/TeamGuide'));
 
 function PageLoader() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="profile" element={<Profile />} />
             <Route path="credentials" element={<Credentials />} />
             <Route path="pricing" element={<Pricing />} />
+            <Route path="guide" element={<TeamGuide />} />
           </Route>
 
           {/* 404 catch-all */}
