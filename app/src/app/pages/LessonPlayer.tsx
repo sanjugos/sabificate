@@ -102,8 +102,20 @@ export default function LessonPlayerPage() {
     );
   }
 
+  const themeVars = {
+    '--bg': '#ffffff',
+    '--text': '#6b7280',
+    '--text-h': '#111827',
+    '--border': '#e5e7eb',
+    '--accent': '#2563eb',
+    '--accent-bg': '#eff6ff',
+    '--accent-border': '#93c5fd',
+    '--code-bg': '#f3f4f6',
+    '--social-bg': '#f9fafb',
+  } as React.CSSProperties;
+
   return (
-    <>
+    <div style={themeVars}>
       {degradedAccess && <DegradedAccessBanner daysRemaining={daysRemaining} />}
       <LessonPlayerComponent
         lesson={content}
@@ -128,6 +140,6 @@ export default function LessonPlayerPage() {
           }).catch(() => {});
         }}
       />
-    </>
+    </div>
   );
 }
