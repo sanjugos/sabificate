@@ -309,7 +309,7 @@ export function CourseDetailView() {
 
         {/* CTA */}
         {isStaticOnly ? (
-          <div className="w-full sm:w-auto rounded-lg px-6 py-2.5 text-sm font-medium bg-gray-400 text-white text-center cursor-default">
+          <div className="w-full sm:w-auto rounded-lg px-6 py-2.5 min-h-[44px] flex items-center justify-center text-sm font-medium bg-gray-400 text-white text-center cursor-default">
             Coming Soon
           </div>
         ) : (
@@ -320,7 +320,7 @@ export function CourseDetailView() {
               if (firstLesson) navigate(`/courses/${course.slug}/lessons/${firstLesson.id}`);
             } : handleEnroll}
             disabled={enrolling}
-            className={`w-full sm:w-auto rounded-lg px-6 py-2.5 text-sm font-medium transition-colors ${
+            className={`w-full sm:w-auto rounded-lg px-6 py-2.5 min-h-[44px] text-sm font-medium transition-colors ${
               isEnrolled
                 ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -394,7 +394,7 @@ export function CourseDetailView() {
                 <button
                   type="button"
                   onClick={() => toggleModule(mod.id)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 min-h-[44px] bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                 >
                   <span className="text-sm font-medium text-gray-900">
                     {mod.title}
@@ -431,7 +431,7 @@ export function CourseDetailView() {
                               ? `/courses/${course.slug}/lessons/${lesson.id}`
                               : '#'
                           }
-                          className={`flex items-center justify-between px-4 py-2.5 text-sm ${
+                          className={`flex items-center justify-between px-4 py-2.5 min-h-[44px] text-sm ${
                             canAccess
                               ? 'hover:bg-blue-50 text-gray-800'
                               : 'text-gray-500 cursor-default'

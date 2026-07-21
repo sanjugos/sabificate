@@ -18,7 +18,7 @@ function CourseCard({ course }: { course: EnrolledCourseSummary }) {
       className="block rounded-lg border border-gray-200 p-4 active:bg-gray-50"
     >
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-medium text-gray-900 text-sm">{course.course_title}</h3>
+        <h3 className="font-medium text-gray-900 text-sm min-w-0 truncate">{course.course_title}</h3>
         <span className="text-xs text-gray-500">
           {course.lessons_completed}/{course.lessons_total}
         </span>
@@ -221,7 +221,7 @@ export default function Dashboard() {
                 to={`/courses/${course.course_slug}`}
                 className="block rounded-lg border border-blue-100 bg-blue-50 p-4 active:bg-blue-100"
               >
-                <h3 className="font-medium text-gray-900 text-sm">{course.course_title}</h3>
+                <h3 className="font-medium text-gray-900 text-sm min-w-0 truncate">{course.course_title}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 capitalize">
                     {course.difficulty_tier}

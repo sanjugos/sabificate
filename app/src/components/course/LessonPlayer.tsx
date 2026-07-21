@@ -270,7 +270,10 @@ export function LessonPlayer({
                   type="button"
                   onClick={() => { if (!locked) setCardIndex(i); }}
                   data-locked={locked ? 'true' : undefined}
-                  className={`h-2 rounded-full transition-all duration-200 ${
+                  className="p-2 -m-1"
+                  aria-label={`Go to card ${i + 1}`}
+                >
+                  <span className={`block h-2 rounded-full transition-all duration-200 ${
                     locked
                       ? 'bg-[var(--border)] opacity-30 w-2 cursor-not-allowed'
                       : i === cardIndex
@@ -278,9 +281,8 @@ export function LessonPlayer({
                         : viewedCards.has(i)
                           ? 'bg-[var(--accent)] opacity-40 w-2'
                           : 'bg-[var(--border)] w-2'
-                  }`}
-                  aria-label={`Go to card ${i + 1}`}
-                />
+                  }`} />
+                </button>
               );
             })}
           </div>

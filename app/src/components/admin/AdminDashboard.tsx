@@ -522,7 +522,7 @@ export function AdminDashboardView() {
             type="button"
             disabled={learnerPage <= 1}
             onClick={() => setLearnerPage((p) => Math.max(1, p - 1))}
-            className="rounded-lg px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-lg px-4 py-2 min-h-[44px] text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -533,7 +533,7 @@ export function AdminDashboardView() {
             type="button"
             disabled={learnerPage >= totalPages}
             onClick={() => setLearnerPage((p) => Math.min(totalPages, p + 1))}
-            className="rounded-lg px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-lg px-4 py-2 min-h-[44px] text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next
           </button>

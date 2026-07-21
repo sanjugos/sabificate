@@ -208,7 +208,7 @@ export default function Pricing() {
           return (
             <div
               key={plan.id}
-              className={`rounded-xl border p-8 flex flex-col ${
+              className={`rounded-xl border p-4 sm:p-8 flex flex-col ${
                 highlighted
                   ? 'border-blue-600 ring-2 ring-blue-600 shadow-lg'
                   : 'border-gray-200 shadow-sm'
@@ -304,7 +304,7 @@ export default function Pricing() {
           {b2bPlans.map((plan) => (
             <div
               key={plan.name}
-              className="rounded-xl border border-gray-200 p-8 shadow-sm"
+              className="rounded-xl border border-gray-200 p-4 sm:p-8 shadow-sm"
             >
               <h3 className="text-lg font-bold text-gray-900 mb-2">
                 {plan.name}

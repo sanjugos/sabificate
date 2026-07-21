@@ -256,7 +256,7 @@ export function CourseCatalog() {
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+          className="rounded-lg border border-gray-300 px-3 py-2 min-h-[44px] text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
         >
           <option value="">All Categories ({filterCounts.totalForCat})</option>
           {[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((cat) => (
@@ -269,7 +269,7 @@ export function CourseCatalog() {
         <select
           value={selectedDifficulty}
           onChange={(e) => setSelectedDifficulty(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+          className="rounded-lg border border-gray-300 px-3 py-2 min-h-[44px] text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
         >
           <option value="">All Levels ({filterCounts.totalForDiff})</option>
           <option value="foundational">Foundational ({filterCounts.diffCounts.foundational})</option>
@@ -324,7 +324,7 @@ export function CourseCatalog() {
             type="button"
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="rounded-lg px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-lg px-4 py-2 min-h-[44px] text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -335,7 +335,7 @@ export function CourseCatalog() {
             type="button"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="rounded-lg px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-lg px-4 py-2 min-h-[44px] text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next
           </button>
