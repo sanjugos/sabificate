@@ -236,6 +236,7 @@ export function LessonPlayer({
       >
         {currentBlock ? (
           <ContentBlockRenderer
+            key={currentBlock.id}
             block={currentBlock}
             dataSaverMode={dataSaverMode}
             onQuizAnswer={handleQuizAnswer}
